@@ -10,9 +10,12 @@ const axiosInstance = axios.create({
   },
 });
 
+console.log("Base URL from .env:", import.meta.env.VITE_BASE_URL);
 // Optional: Add request/response interceptors if needed
 axiosInstance.interceptors.request.use(
   (config) => {
+    const fullUrl = `${import.meta.env.VITE_BASE_URL || ''}${config.url}`;
+    console.log(fullUrl);
     // Do something before sending the request (e.g., add authorization token)
     return config;
   },

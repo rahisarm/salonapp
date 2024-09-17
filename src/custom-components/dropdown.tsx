@@ -22,7 +22,7 @@ import axiosInstance from "@/services/axiosInstance";
 const getEndPoint = (dataType: string) => {
   switch (dataType) {
     case "brhid":
-      return "/branch"; // Replace with actual API URL for branches
+      return "http://localhost:8080/api/branch"; // Replace with actual API URL for branches
     case "user":
       return "/getUser"; // Replace with actual API URL for locations
     default:
@@ -31,8 +31,8 @@ const getEndPoint = (dataType: string) => {
 };
 
 type DataItems={
-    value:string,
-    label:string
+    docno:string,
+    refname:string
 }
 // Define the prop types
 interface CustDropDownProps {
@@ -48,20 +48,24 @@ export function CustDropDown({ dataType,dataLabel, onValueChange, value: parentV
   const [items, setItems] = React.useState<DataItems[]>([]); // Stores the fetched data
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState<string | null>(null);
+  const [searchTerm, setSearchTerm] = React.useState("");
 
+  
   React.useEffect(() => {
     // This is the side effect, such as fetching data
     setLoading(true);
     
     const endpoint = getEndPoint(dataType);
-  
+    console.log(endpoint);
     axiosInstance
       .get(endpoint)
       .then((response) => {
+        console.log(response);
         setItems(Array.isArray(response.data) ? response.data : []); // Assuming response.data is an array of data
       })
       .catch((error) => {
         console.error(`Error fetching ${dataType}:`, error);
+        setError(`Failed to fetch ${dataLabel}. Please try again later.`);
         setItems([]);
       })
       .finally(() => {
@@ -90,6 +94,10 @@ export function CustDropDown({ dataType,dataLabel, onValueChange, value: parentV
     onValueChange(dataType,newValue); // Pass the selected value to the parent
   };
 
+  // const filteredItems = items.filter(item =>
+  //   item.label.toLowerCase().includes(searchTerm.toLowerCase())
+  // );
+
   const handleReset = () => {
     setValue(""); // Reset internal state
     onValueChange(dataType,""); // Notify parent that the value has been reset
@@ -104,7 +112,7 @@ export function CustDropDown({ dataType,dataLabel, onValueChange, value: parentV
           aria-expanded={open}
           className="w-[200px] justify-between"
         >
-          {value ? items.find((item) => item.value === value)?.label : `Select ${dataLabel}...`}
+          {value ? items.find((item) => item.docno === value)?.refname : `Select ${dataLabel}...`}
           <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
         </Button>
       </PopoverTrigger>
@@ -116,7 +124,7 @@ export function CustDropDown({ dataType,dataLabel, onValueChange, value: parentV
         ) : (
           <>
             <Command>
-              <CommandInput placeholder={`Search ${dataLabel}...`} />
+              <CommandInput placeholder={`Search ${dataLabel}...`} onValueChange={setSearchTerm} />
               <CommandList>
                 {items.length === 0 ? (
                   <CommandEmpty>No {dataLabel} found.</CommandEmpty>
@@ -124,17 +132,17 @@ export function CustDropDown({ dataType,dataLabel, onValueChange, value: parentV
                   <CommandGroup>
                     {items.map((item) => (
                       <CommandItem
-                        key={item.value}
-                        value={item.value}
+                        key={item.docno}
+                        value={item.docno}
                         onSelect={handleSelect}
                       >
                         <Check
                           className={cn(
                             "mr-2 h-4 w-4",
-                            value === item.value ? "opacity-100" : "opacity-0"
+                            value === item.docno ? "opacity-100" : "opacity-0"
                           )}
                         />
-                        {item.label}
+                        {item.refname}
                       </CommandItem>
                     ))}
                   </CommandGroup>
