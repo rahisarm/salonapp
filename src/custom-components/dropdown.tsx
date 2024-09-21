@@ -22,7 +22,7 @@ import axiosInstance from "@/services/axiosInstance";
 const getEndPoint = (dataType: string) => {
   switch (dataType) {
     case "brhid":
-      return "http://localhost:8080/api/branch"; // Replace with actual API URL for branches
+      return "/branch"; // Replace with actual API URL for branches
     case "user":
       return "/getUser"; // Replace with actual API URL for locations
     default:
@@ -31,7 +31,7 @@ const getEndPoint = (dataType: string) => {
 };
 
 type DataItems={
-    docno:string,
+    docno:number,
     refname:string
 }
 // Define the prop types
@@ -54,13 +54,10 @@ export function CustDropDown({ dataType,dataLabel, onValueChange, value: parentV
   React.useEffect(() => {
     // This is the side effect, such as fetching data
     setLoading(true);
-    
     const endpoint = getEndPoint(dataType);
-    console.log(endpoint);
     axiosInstance
       .get(endpoint)
       .then((response) => {
-        console.log(response);
         setItems(Array.isArray(response.data) ? response.data : []); // Assuming response.data is an array of data
       })
       .catch((error) => {
@@ -112,7 +109,7 @@ export function CustDropDown({ dataType,dataLabel, onValueChange, value: parentV
           aria-expanded={open}
           className="w-[200px] justify-between"
         >
-          {value ? items.find((item) => item.docno === value)?.refname : `Select ${dataLabel}...`}
+          {value ? items.find((item) => item.docno+"" === value)?.refname : `Select ${dataLabel}...`}
           <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
         </Button>
       </PopoverTrigger>
@@ -133,13 +130,13 @@ export function CustDropDown({ dataType,dataLabel, onValueChange, value: parentV
                     {items.map((item) => (
                       <CommandItem
                         key={item.docno}
-                        value={item.docno}
+                        value={item.docno+""}
                         onSelect={handleSelect}
                       >
                         <Check
                           className={cn(
                             "mr-2 h-4 w-4",
-                            value === item.docno ? "opacity-100" : "opacity-0"
+                            value === item.docno+"" ? "opacity-100" : "opacity-0"
                           )}
                         />
                         {item.refname}

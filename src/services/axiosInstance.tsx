@@ -1,8 +1,8 @@
 // src/utils/axiosInstance.ts
 import axios from "axios";
-
+import { CONFIG } from '../config';
 const axiosInstance = axios.create({
-  baseURL: import.meta.env.BASE_URL,
+  baseURL: CONFIG.API_BASE_URL,
   timeout: 10000, // Optional timeout (10 seconds)
   headers: {
     "Content-Type": "application/json",
