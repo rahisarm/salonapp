@@ -36,8 +36,8 @@ type DataItems={
 }
 // Define the prop types
 interface CustDropDownProps {
-  dataType: "brhid" | "user"; // Defines the type of data to fetch
-  dataLabel: "Branch" | "User";
+  dataType: string; // Defines the type of data to fetch
+  dataLabel: string;
   onValueChange: (datatype:string,value: string) => void; // Callback to send the selected value to the parent
   value?: string; // Optional value set by the parent
 }

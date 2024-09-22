@@ -1,6 +1,6 @@
 
 import { cn } from "@/lib/utils"
-import { CustDropDown } from "./dropdown"
+import { CustDropDown } from "./custdropdown"
 
 export function MainNav({
   className,

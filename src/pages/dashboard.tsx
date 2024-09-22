@@ -1,11 +1,12 @@
 import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { CustDropDown } from "@/custom-components/dropdown";
+import { CustDropDown } from "@/custom-components/custdropdown";
 import { MainNav } from "@/custom-components/main-nav";
 import { CustMenuBar } from "@/custom-components/menu-bar";
 import { ModeToggle } from "@/custom-components/mode-toggle";
 import { UserNav } from "@/custom-components/usernav";
 import { ChevronDown, Menu } from "lucide-react";
+import { Outlet } from "react-router-dom";
 
 const handleValueChange=function(dataType:string,selectedValue:string){
 
@@ -32,7 +33,11 @@ export function Dashboard(){
             </div>
           </div>
         </nav>
-        
+        <main>
+          <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
+            <Outlet></Outlet>
+          </div>
+        </main>
       </>
     )
 }

@@ -14,6 +14,7 @@ import {
     MenubarTrigger,
   } from "@/components/ui/menubar"
 import { cn } from "@/lib/utils"
+import { Link } from "react-router-dom"
   
   export function CustMenuBar({
     className,
@@ -27,7 +28,7 @@ import { cn } from "@/lib/utils"
           <MenubarTrigger>Masters</MenubarTrigger>
           <MenubarContent>
             <MenubarItem>
-              New Tab <MenubarShortcut>⌘T</MenubarShortcut>
+              <Link to={"UserMaster"}>User Master<MenubarShortcut>⌘T</MenubarShortcut></Link>
             </MenubarItem>
             <MenubarItem>
               New Window <MenubarShortcut>⌘N</MenubarShortcut>
