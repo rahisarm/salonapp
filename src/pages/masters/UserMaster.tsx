@@ -1,3 +1,4 @@
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
@@ -6,6 +7,9 @@ import { Label } from "@/components/ui/label";
 import Confirm from "@/custom-components/Confirm";
 import { CustDropDown } from "@/custom-components/custdropdown";
 import { DataTable } from "@/custom-components/DataTable";
+import FileUpload from "@/custom-components/FileUpload";
+import { toast } from "@/hooks/use-toast";
+import { Toast } from "@/components/ui/toast";
 import {DotsHorizontalIcon} from "@radix-ui/react-icons";
 import { ColumnDef } from "@tanstack/react-table";
 import { useState } from "react";
@@ -47,6 +51,8 @@ interface Users{
     const [modalDesc,setModalDesc]=useState("Make changes to add users. Click save when you're done.");
     const [userlevel,setUserLevel]=useState(0);
     const [showAttach,setShowAttach]=useState(false);
+    const [refdocno,setRefdocno]=useState("");
+    const [refdtype,setRefdtype]=useState("");
 const columns:ColumnDef<Users>[] = [
     {
       accessorKey: "docno",
@@ -117,13 +123,23 @@ const columns:ColumnDef<Users>[] = [
       };
       
       const handleDelete = (user:Users) => {
+        toast({
+          title: "User Deleted",
+          description: `${user.username} has been deleted successfully.`,
+          variant: "default", // You can choose "success", "error", etc.
+        });
         console.log("Deleting user:", user);
         // Trigger the delete action
       };
       
+      const handleFileUpload=()=>{
+
+      }
       const handleAttach = (user:Users) => {
-        console.log("Attach details for user:", user);
-        // Redirect or open a details modal
+        setShowAttach(true);
+        setRefdocno(user.docno+"");
+        setRefdtype("USR");
+
       };
       const handleForm=()=>{
         setShowAlert(true);
@@ -139,7 +155,8 @@ const columns:ColumnDef<Users>[] = [
     return (
         <>
         <div className="w-full">
-            <div className="flex items-center justify-end py-4">
+            <div className="flex items-center justify-between py-4">
+                <h2 className="text-2xl">Users<Badge variant={"outline"} className="ml-2">4 Users</Badge></h2>
                 <Dialog open={isOpen} onOpenChange={setIsOpen}>
                     <DialogTrigger asChild>
                         <Button variant="outline">Add User</Button>
@@ -197,6 +214,12 @@ const columns:ColumnDef<Users>[] = [
                 <Confirm title="Confirm Submission" description={alertDesc} onConfirm={submitForm} onCancel={()=>setShowAlert(false)}></Confirm>
             )
         }
+        {
+          showAttach && (
+            <FileUpload refdocno="" refdtype="" onFileUpload={handleFileUpload} openstatus={showAttach}></FileUpload>
+          )
+        }
+
         </>
     )
   }

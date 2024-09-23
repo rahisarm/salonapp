@@ -3,14 +3,16 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import React, { useState } from 'react';
 
 interface FileUploadProps {
+  
   refdocno: string;
   refdtype: string;
   onFileUpload: (file: File, refdocno: string, refdtype: string) => void; // Callback for file upload
+  openstatus?:boolean
 }
 
-const FileUpload: React.FC<FileUploadProps> = ({ refdocno, refdtype, onFileUpload }) => {
+const FileUpload: React.FC<FileUploadProps> = ({ refdocno, refdtype, onFileUpload ,openstatus=false}) => {
     const [selectedFile, setSelectedFile] = useState<File | null>(null);
-    const [isOpen,setIsOpen]=useState<boolean>(false);
+    const [isOpen,setIsOpen]=useState<boolean>(openstatus);
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     if (event.target.files && event.target.files.length > 0) {
       setSelectedFile(event.target.files[0]);
