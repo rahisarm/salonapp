@@ -16,6 +16,15 @@ axiosInstance.interceptors.request.use(
   (config) => {
     const fullUrl = `${import.meta.env.VITE_BASE_URL || ''}${config.url}`;
     console.log(fullUrl);
+    const token=localStorage.getItem('token');
+    const userdocno=localStorage.getItem('userdocno');
+    if(token){
+      config.headers['Authorization']=`Bearer ${token}`;
+    }
+    if (userdocno) {
+      // If userdocno exists, add it to a custom header
+      config.headers['X-User-Docno'] = userdocno; 
+    }
     // Do something before sending the request (e.g., add authorization token)
     return config;
   },

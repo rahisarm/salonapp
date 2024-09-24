@@ -8,6 +8,8 @@ import { Icons } from "@/custom-components/icons";
 import { cn } from "@/lib/utils";
 import * as yup from "yup";
 import React from "react"
+import { useNavigate } from "react-router-dom";
+import axiosInstance from "@/services/axiosInstance";
 
 interface LoginProps extends React.HTMLAttributes<HTMLDivElement> {}
 
@@ -17,7 +19,7 @@ const schema=yup.object().shape({
 });
 
 export function Login({ className, ...props }: LoginProps){
-
+  const navigate=useNavigate();
   const {
     register,
     handleSubmit,
@@ -29,16 +31,31 @@ export function Login({ className, ...props }: LoginProps){
     const [isLoading,setIsLoading]=React.useState<boolean>(false);
 
     async function onSubmit(data:any) {
-      
+      axiosInstance
+      .post("/auth/login",{username:data.username,password:data.password})
+      .then((response) => {
+        localStorage.setItem('token',response.data.accessToken);
+        localStorage.setItem('userdocno',response.data.userdocno);
+        if(response.data.accessToken){
+          navigate('/dashboard');
+        }
+      })
+      .catch((error) => {
+        console.error(`Error fetching:`, error);
+        
+      })
+      .finally(() => {
+        setIsLoading(false);
+      });
     }
+
 
     return (
       <>
+      <div className="parentStyle">
       <div className="overflow-hidden rounded-[0.5rem] border bg-background shadow">
-      <div className="md:hidden">
-        
-      </div>
-      <div className="container relative hidden h-[300px] flex-col items-center justify-center md:grid lg:max-w-none lg:grid-cols-2 lg:px-0">
+      
+      <div className="container relative hidden h-full flex-col items-center justify-center md:grid lg:max-w-none lg:grid-cols-2 lg:px-0">
         <div className="relative hidden h-full flex-col bg-muted p-10 text-white dark:border-r lg:flex">
           <div className="absolute inset-0 bg-zinc-900" />
           <div className="relative z-20 flex items-center text-lg font-medium">
@@ -88,6 +105,8 @@ export function Login({ className, ...props }: LoginProps){
         </div>
       </div>
       </div>
-    </>
+      </div>
+        
+      </>
     )
 }

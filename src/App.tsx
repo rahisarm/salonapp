@@ -5,13 +5,17 @@ import { Navigate, Route, BrowserRouter as Router, Routes } from 'react-router-d
 import AppRoutes from './routes'
 import { ThemeProvider } from './custom-components/theme-provider'
 import { Toaster } from './components/ui/toaster'
+import { ConfirmProvider } from './custom-components/Confirm'
 
 function App() {
   return (
     <ThemeProvider>
       <Router>
-        <Toaster></Toaster>
-        <AppRoutes></AppRoutes>
+        <ConfirmProvider>
+          <Toaster></Toaster>
+          <AppRoutes></AppRoutes>
+        </ConfirmProvider>
+        
       </Router>
     </ThemeProvider>    
   )

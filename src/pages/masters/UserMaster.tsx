@@ -4,7 +4,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import Confirm from "@/custom-components/Confirm";
+
 import { CustDropDown } from "@/custom-components/custdropdown";
 import { DataTable } from "@/custom-components/DataTable";
 import FileUpload from "@/custom-components/FileUpload";
@@ -13,6 +13,7 @@ import { Toast } from "@/components/ui/toast";
 import {DotsHorizontalIcon} from "@radix-ui/react-icons";
 import { ColumnDef } from "@tanstack/react-table";
 import { useState } from "react";
+import { useConfirm } from "@/custom-components/Confirm";
 
 interface Users{
     docno:number,
@@ -45,7 +46,6 @@ interface Users{
     const [password, setPassword] = useState("");
     const [email, setEmail] = useState("");
     const [mobile, setMobile] = useState("");
-    const [showAlert,setShowAlert]=useState(false);
     const [alertDesc,setAlertDesc]=useState("Do you want to update changes?");
     const [modaltitle,setModalTitle]=useState("Add User");
     const [modalDesc,setModalDesc]=useState("Make changes to add users. Click save when you're done.");
@@ -53,6 +53,9 @@ interface Users{
     const [showAttach,setShowAttach]=useState(false);
     const [refdocno,setRefdocno]=useState("");
     const [refdtype,setRefdtype]=useState("");
+
+    const { show }=useConfirm();
+
 const columns:ColumnDef<Users>[] = [
     {
       accessorKey: "docno",
@@ -142,7 +145,7 @@ const columns:ColumnDef<Users>[] = [
 
       };
       const handleForm=()=>{
-        setShowAlert(true);
+        show("Are you sure you want to delete this item?", submitForm);
       }
       const submitForm=()=>{
 
@@ -174,12 +177,12 @@ const columns:ColumnDef<Users>[] = [
                                 <Input id="docno" value={docno} className="col-span-3" />
                             </div>
                             <div className="grid grid-cols-4 items-center gap-4">
-                                <Label htmlFor="userid" className="text-right">User ID</Label>
-                                <Input id="userid" value={userid} className="col-span-3" />
+                                <Label htmlFor="username" className="text-right">Username</Label>
+                                <Input id="username" value={userid} className="col-span-3" />
                             </div>
                             <div className="grid grid-cols-4 items-center gap-4">
-                                <Label htmlFor="username" className="text-right">Username</Label>
-                                <Input id="username" value={username} className="col-span-3" />
+                                <Label htmlFor="fullname" className="text-right">Full Name</Label>
+                                <Input id="fullname" value={username} className="col-span-3" />
                             </div>
                             <div className="grid grid-cols-4 items-center gap-4">
                                 <Label htmlFor="password" className="text-right">Password</Label>
@@ -209,11 +212,6 @@ const columns:ColumnDef<Users>[] = [
             </div>
         </div>
         
-        {
-            showAlert && (
-                <Confirm title="Confirm Submission" description={alertDesc} onConfirm={submitForm} onCancel={()=>setShowAlert(false)}></Confirm>
-            )
-        }
         {
           showAttach && (
             <FileUpload refdocno="" refdtype="" onFileUpload={handleFileUpload} openstatus={showAttach}></FileUpload>
