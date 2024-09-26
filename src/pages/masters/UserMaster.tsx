@@ -4,17 +4,18 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-
+import * as yup from "yup";
 import { CustDropDown } from "@/custom-components/custdropdown";
 import { DataTable } from "@/custom-components/DataTable";
 import FileUpload from "@/custom-components/FileUpload";
 import { toast } from "@/hooks/use-toast";
-import { Toast } from "@/components/ui/toast";
 import {DotsHorizontalIcon} from "@radix-ui/react-icons";
 import { ColumnDef } from "@tanstack/react-table";
 import { useState } from "react";
 import { useConfirm } from "@/custom-components/Confirm";
-
+import { useForm } from "react-hook-form";
+import { yupResolver } from "@hookform/resolvers/yup";
+import TextInput from "@/custom-components/TextInput";
 interface Users{
     docno:number,
     userid:string,
@@ -37,8 +38,23 @@ interface Users{
     // Add more data as needed
   ];
 
-  
+  const schema=yup.object().shape({
+    username:yup.string().required('Username is required'),
+    password:yup.string().required('Password is required'),
+    mobile:yup.string().matches(/^[0-9]{10}$/, 'Mobile number must be 10 digits')
+    .required('Mobile number is required'),
+    userlevel:yup.number().required('User Level is Required')
+  });
   export function UserMaster(){
+
+    const {
+      register,
+      handleSubmit,
+      formState: { errors, isSubmitting },
+    } = useForm({
+      resolver: yupResolver(schema),
+    });
+
     const [isOpen,setIsOpen]=useState(false);
     const [userid, setUserId] = useState("");
     const [docno, setDocno] = useState(0);
@@ -76,10 +92,6 @@ const columns:ColumnDef<Users>[] = [
     {
       accessorKey: "mobile",
       header: "Mobile",
-    },
-    {
-      accessorKey: "activestatus",
-      header: "Active Status",
     },
     {
         id: "actions",
@@ -173,32 +185,31 @@ const columns:ColumnDef<Users>[] = [
                         </DialogHeader>
                         <div className="grid gap-4 py-4">
                             <div className="grid grid-cols-4 items-center gap-4 hidden">
-                                <Label htmlFor="docno" className="text-right">Doc No</Label>
+                                <Label htmlFor="docno" className="text-left">Doc No</Label>
                                 <Input id="docno" value={docno} className="col-span-3" />
                             </div>
-                            <div className="grid grid-cols-4 items-center gap-4">
-                                <Label htmlFor="username" className="text-right">Username</Label>
-                                <Input id="username" value={userid} className="col-span-3" />
+                            <div className="grid grid-cols-1 items-center gap-4">
+                              <TextInput name="username" label="Username" value={username}></TextInput>
                             </div>
-                            <div className="grid grid-cols-4 items-center gap-4">
-                                <Label htmlFor="fullname" className="text-right">Full Name</Label>
+                            <div className="grid grid-cols-1 items-center gap-4">
+                                <Label htmlFor="fullname" className="text-left">Full Name</Label>
                                 <Input id="fullname" value={username} className="col-span-3" />
                             </div>
-                            <div className="grid grid-cols-4 items-center gap-4">
-                                <Label htmlFor="password" className="text-right">Password</Label>
-                                <Input id="password" value={password} className="col-span-3" type="password"/>
+                            <div className="grid grid-cols-1 items-center gap-4">
+                                <Label htmlFor="password" className="text-left">Password</Label>
+                                <Input id="password" value={password} className="col-span-3" type="password" {...register("password")}/>
                             </div>
-                            <div className="grid grid-cols-4 items-center gap-4">
-                                <Label htmlFor="email" className="text-right">Email</Label>
+                            <div className="grid grid-cols-1 items-center gap-4">
+                                <Label htmlFor="email" className="text-left">Email</Label>
                                 <Input id="email" value={email} className="col-span-3" type="email"/>
                             </div>
-                            <div className="grid grid-cols-4 items-center gap-4">
-                                <Label htmlFor="mobile" className="text-right">Mobile</Label>
-                                <Input id="mobile" value={mobile} className="col-span-3"/>
+                            <div className="grid grid-cols-1 items-center gap-4">
+                                <Label htmlFor="mobile" className="text-left">Mobile</Label>
+                                <Input id="mobile" value={mobile} className="col-span-3" {...register("mobile")}/>
                             </div>
-                            <div className="grid grid-cols-4 items-center gap-4">
-                                <Label htmlFor="userlevel" className="text-right">User Level</Label>
-                                <CustDropDown dataLabel="User Level" dataType="userlevel" onValueChange={handleDropdownChange}></CustDropDown>
+                            <div className="grid grid-cols-1 items-center gap-4">
+                                <Label htmlFor="userlevel" className="text-left">User Level</Label>
+                                <CustDropDown dataLabel="User Level" dataType="userlevel" onValueChange={handleDropdownChange} {...register("userlevel")}></CustDropDown>
                             </div>
                         </div>
                         <DialogFooter>

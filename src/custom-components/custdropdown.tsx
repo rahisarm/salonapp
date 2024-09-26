@@ -58,7 +58,20 @@ export function CustDropDown({ dataType,dataLabel, onValueChange, value: parentV
     axiosInstance
       .get(endpoint)
       .then((response) => {
-        setItems(Array.isArray(response.data) ? response.data : []); // Assuming response.data is an array of data
+        console.log(response.data);
+        if(dataType=="brhid"){
+          let subitem:DataItems[]=[];
+          if(Array.isArray(response.data)){
+            response.data.map((obj)=>{
+              subitem.push({docno:obj.docno,refname:obj.branchname});
+            });
+            setItems(subitem);
+          }
+          else{
+            setItems([]);
+          }
+        }
+        //setItems(Array.isArray(response.data) ? response.data : []); // Assuming response.data is an array of data
       })
       .catch((error) => {
         console.error(`Error fetching ${dataType}:`, error);
@@ -107,13 +120,13 @@ export function CustDropDown({ dataType,dataLabel, onValueChange, value: parentV
           variant="outline"
           role="combobox"
           aria-expanded={open}
-          className="w-[200px] justify-between"
+          className="w-full justify-between"
         >
           {value ? items.find((item) => item.docno+"" === value)?.refname : `Select ${dataLabel}...`}
           <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-[200px] p-0">
+      <PopoverContent className="w-full p-0">
         {loading ? (
           <div className="p-4">Loading...</div>
         ) : error ? (
