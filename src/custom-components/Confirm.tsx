@@ -4,7 +4,7 @@ import { Dialog, DialogContent, DialogHeader, DialogFooter, DialogTitle } from "
 import { Button } from "@/components/ui/button";
 
 const ConfirmContext = createContext({
-  show: (message: string, onConfirm: () => void) => {},
+  showConfirm: (message: string, onConfirm: () => void) => {},
 });
 
 export const useConfirm = () => useContext(ConfirmContext);
@@ -14,7 +14,7 @@ export const ConfirmProvider = ({ children }: { children: React.ReactNode }) => 
   const [message, setMessage] = useState("");
   const [onConfirmCallback, setOnConfirmCallback] = useState<() => void>(() => {});
 
-  const show = (message: string, onConfirm: () => void) => {
+  const showConfirm = (message: string, onConfirm: () => void) => {
     setMessage(message);
     setOnConfirmCallback(() => onConfirm);
     setIsVisible(true);
@@ -30,7 +30,7 @@ export const ConfirmProvider = ({ children }: { children: React.ReactNode }) => 
   };
 
   return (
-    <ConfirmContext.Provider value={{ show }}>
+    <ConfirmContext.Provider value={{ showConfirm }}>
       {children}
       {isVisible && (
         <Dialog open={isVisible} onOpenChange={hide}>

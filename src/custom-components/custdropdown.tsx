@@ -25,6 +25,8 @@ const getEndPoint = (dataType: string) => {
       return "/branch"; // Replace with actual API URL for branches
     case "user":
       return "/getUser"; // Replace with actual API URL for locations
+    case "userlevel":
+      return "/userlevel";
     default:
       return "";
   }
@@ -40,11 +42,12 @@ interface CustDropDownProps {
   dataLabel: string;
   onValueChange: (datatype:string,value: string) => void; // Callback to send the selected value to the parent
   value?: string; // Optional value set by the parent
+  field?:any;
 }
 
-export function CustDropDown({ dataType,dataLabel, onValueChange, value: parentValue }: CustDropDownProps) {
+export function CustDropDown({ dataType,dataLabel, onValueChange, value: parentValue,field }: CustDropDownProps) {
   const [open, setOpen] = React.useState(false);
-  const [value, setValue] = React.useState(parentValue || ""); // Default to parent-provided value or internal state
+  const [value, setValue] = React.useState(parentValue || (field ? field.value : "")); // Default to parent-provided value or internal state
   const [items, setItems] = React.useState<DataItems[]>([]); // Stores the fetched data
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState<string | null>(null);
@@ -58,20 +61,16 @@ export function CustDropDown({ dataType,dataLabel, onValueChange, value: parentV
     axiosInstance
       .get(endpoint)
       .then((response) => {
-        console.log(response.data);
-        if(dataType=="brhid"){
-          let subitem:DataItems[]=[];
-          if(Array.isArray(response.data)){
-            response.data.map((obj)=>{
-              subitem.push({docno:obj.docno,refname:obj.branchname});
-            });
-            setItems(subitem);
-          }
-          else{
-            setItems([]);
-          }
+        let subitem: DataItems[] = [];
+        if (Array.isArray(response.data)) {
+          response.data.map((obj) => {
+            if (dataType === "brhid") subitem.push({ docno: obj.docno, refname: obj.branchname });
+            if (dataType === "userlevel") subitem.push({ docno: obj.docno, refname: obj.userlevel });
+          });
+          setItems(subitem);
+        } else {
+          setItems([]);
         }
-        //setItems(Array.isArray(response.data) ? response.data : []); // Assuming response.data is an array of data
       })
       .catch((error) => {
         console.error(`Error fetching ${dataType}:`, error);
@@ -100,6 +99,7 @@ export function CustDropDown({ dataType,dataLabel, onValueChange, value: parentV
   const handleSelect = (currentValue: string) => {
     const newValue = currentValue === value ? "" : currentValue;
     setValue(newValue);
+    if (field) field.onChange(newValue);
     setOpen(false);
     onValueChange(dataType,newValue); // Pass the selected value to the parent
   };

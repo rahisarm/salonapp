@@ -1,69 +1,69 @@
-"use client";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"; // assuming you're using a UI library
+import { Button } from "@/components/ui/button";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"; // Assuming you have a Dropdown component
+import { DotsHorizontalIcon } from "@radix-ui/react-icons";
 
-import {
-  ColumnDef,
-  flexRender,
-  getCoreRowModel,
-  useReactTable,
-} from "@tanstack/react-table";
-
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table"; // Adjust the import based on your file structure
-
-interface DataTableProps<TData> {
-  columns: ColumnDef<TData>[];
-  data: TData[];
+interface Column {
+  key: string;
+  label: string;
 }
 
-export function DataTable<TData>({ columns, data }: DataTableProps<TData>) {
-  const table = useReactTable({
-    data,
-    columns,
-    getCoreRowModel: getCoreRowModel(),
-  });
+interface Action {
+  label: string;
+  onClick: (row: any) => void; // Action function that receives the row data
+}
 
+interface DataTableProps<T> {
+  columns: Column[];
+  data: T[];
+  actions: Action[]; // List of actions to display in the dropdown
+  hiddenColumns?: string[]; // Add hiddenColumns prop
+}
+
+export function DataTable<T extends Record<string, any>>({ columns, data, actions, hiddenColumns = [] }: DataTableProps<T>) {
   return (
-    <div className="rounded-md border">
-      <Table>
-        <TableHeader>
-          {table.getHeaderGroups().map((headerGroup) => (
-            <TableRow key={headerGroup.id}>
-              {headerGroup.headers.map((header) => (
-                <TableHead key={header.id}>
-                  {header.isPlaceholder
-                    ? null
-                    : flexRender(header.column.columnDef.header, header.getContext())}
-                </TableHead>
-              ))}
-            </TableRow>
+    <Table>
+      <TableHeader>
+        <TableRow>
+          {columns.map((column) => (
+            !hiddenColumns.includes(column.key) && (
+              <TableHead key={column.key}>{column.label}</TableHead>
+            )
           ))}
-        </TableHeader>
-        <TableBody>
-          {table.getRowModel().rows.length ? (
-            table.getRowModel().rows.map((row) => (
-              <TableRow key={row.id}>
-                {row.getVisibleCells().map((cell) => (
-                  <TableCell key={cell.id}>
-                    {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                  </TableCell>
-                ))}
-              </TableRow>
-            ))
-          ) : (
-            <TableRow>
-              <TableCell colSpan={columns.length} className="h-24 text-center">
-                No results.
-              </TableCell>
-            </TableRow>
-          )}
-        </TableBody>
-      </Table>
-    </div>
+          <TableHead>Actions</TableHead>
+        </TableRow>
+      </TableHeader>
+      <TableBody>
+        {data.map((row, index) => (
+          <TableRow key={index}>
+            {columns.map((column) => (
+              !hiddenColumns.includes(column.key) && (
+                <TableCell key={column.key}>
+                  {row[column.key as keyof T]}
+                </TableCell>
+              )
+            ))}
+            <TableCell>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" className="h-8 w-8 p-0">
+                    <span className="sr-only">Open menu</span>
+                    <DotsHorizontalIcon className="h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent>
+                {actions.map((action, idx) => (
+                    <DropdownMenuItem key={idx} onClick={() => action.onClick(row)}>
+                      {action.label}
+                    </DropdownMenuItem>
+                  ))}  
+                </DropdownMenuContent>
+              </DropdownMenu>
+              
+            </TableCell>
+          </TableRow>
+        ))}
+      </TableBody>
+    </Table>
   );
 }
