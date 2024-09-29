@@ -47,7 +47,7 @@ interface CustDropDownProps {
 
 export function CustDropDown({ dataType,dataLabel, onValueChange, value: parentValue,field }: CustDropDownProps) {
   const [open, setOpen] = React.useState(false);
-  const [value, setValue] = React.useState(parentValue || (field ? field.value : "")); // Default to parent-provided value or internal state
+  const [value, setValue] = React.useState(parentValue || (field ? field.value+"" : "")); // Default to parent-provided value or internal state
   const [items, setItems] = React.useState<DataItems[]>([]); // Stores the fetched data
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState<string | null>(null);
@@ -92,8 +92,9 @@ export function CustDropDown({ dataType,dataLabel, onValueChange, value: parentV
   // Update internal state when parent changes the value explicitly
   React.useEffect(() => {
     if (parentValue !== undefined) {
-      setValue(parentValue); // Only set value from parent if it's passed
-    }
+        console.log('Parent Value Changed:'+parentValue);
+        setValue(parentValue+"");
+    } 
   }, [parentValue]);
 
   const handleSelect = (currentValue: string) => {

@@ -10,7 +10,9 @@ import { ChevronDown, Menu } from "lucide-react";
 import { Outlet } from "react-router-dom";
 
 const handleValueChange=function(dataType:string,selectedValue:string){
-
+  if(dataType=="brhid"){
+    localStorage.setItem("brhid",selectedValue);
+  }
 };
 export function Dashboard(){
     return (

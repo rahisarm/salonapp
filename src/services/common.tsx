@@ -9,28 +9,33 @@ const getAction = (mode: string) => {
         return "Updated";
     case "D":
         return "Deleted";
+    case "G":
+        return "Fetched";
     default:
         return "Saved";
     }
   };
 
   const getMapping = (data:any,mode: string,endpoint:string) => {
+    console.log("Mode:"+mode);
     switch(mode){
-    case "A":
-        return axiosInstance.post(endpoint,data);
-    case "E":
-        return axiosInstance.put(endpoint,data);
-    case "D":
-        return axiosInstance.delete(endpoint,data);
-    case "G":
-        return axiosInstance.get(endpoint,data)
-    default:
-        console.error(`Unsupported mode: ${mode}`);
-        return;
+        case "A":
+            return axiosInstance.post(endpoint,data);
+        case "E":
+            return axiosInstance.put(endpoint,data);
+        case "D":
+            return axiosInstance.delete(endpoint+"/"+data.docno);
+        case "G":
+            return axiosInstance.get(endpoint)
+        default:
+            console.error(`Unsupported mode: ${mode}`);
+            return;
     }
   };
-export function sendAPIRequest(data:any,mode:string,endpoint:string,label:string):Promise<void>{
+export function sendAPIRequest(data:any,mode:string,endpoint:string,label:string):Promise<any>{
     const action=getAction(mode);
+    data={...data,"userid":localStorage.getItem("userdocno"),"brhid":localStorage.getItem("brhid")};
+    console.log(data);
     let axioscall=getMapping(data,mode,endpoint);
 
     return new Promise((resolve,reject)=>{
@@ -51,7 +56,7 @@ export function sendAPIRequest(data:any,mode:string,endpoint:string,label:string
                     description: `${label} has been ${action.toLowerCase()} successfully.`,
                     variant: "default", // You can choose "success", "error", etc.
                 });
-                resolve();
+                resolve(response);
             })
             .catch((error) => {
                 console.error(`Error fetching:`, error);

@@ -8,14 +8,23 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Icons } from "@/custom-components/icons";
 import { useConfirm } from "@/custom-components/Confirm";
 import { CustDropDown } from "@/custom-components/custdropdown";
 import { DataTable } from "@/custom-components/DataTable";
-import axiosInstance from "@/services/axiosInstance";
 import { sendAPIRequest } from "@/services/common";
 
+interface TblStructure{
+  docno:number;
+  username:string;
+  fullname:string;
+  email:string;
+  mobile:string;
+  userlevel:string;
+  roleid:string;
+
+}
 const formSchema = z.object({
   username: z.string().min(1, {
     message: "Username is required.",
@@ -26,11 +35,12 @@ const formSchema = z.object({
   fullname: z.string().optional(), // Optional fields
   email: z.string().optional(),
   mobile: z.string().optional(),
-  userlevel: z.string().min(1, {
+  roleid: z.string().min(1, {
     message: "Userlevel is required.",
   }),
   docno: z.number().optional(),
 });
+
 
 const tblcolumns = [
   { key: "docno", label: "Doc No" },
@@ -39,12 +49,7 @@ const tblcolumns = [
   { key: "email", label: "Email" },
   { key: "mobile", label: "Mobile" },
   { key: "userlevel",label: "User Level"},
-  { key: "userleveldocno",label: "User Level Doc No"}
-];
-const tbldata = [
-  { docno: 1, username: "john_doe", fullname: "John Doe", email: "john@example.com", mobile: "1234567890" ,userlevel:"Accounts",userleveldocno:"3"},
-  { docno: 2, username: "admin", fullname: "Sys.Admin", email: "admin@example.com", mobile: "1234567890" ,userlevel:"First Level",userleveldocno:"1"}
-  // Add more user data here
+  { key: "roleid",label: "User Level Doc No"}
 ];
 
 const tblHiddenColumns = ["userleveldocno"];
@@ -57,10 +62,12 @@ const tblHiddenColumns = ["userleveldocno"];
 
 export function UserMaster(){
   const [isOpen,setIsOpen]=useState(false);
+  const [tbldata,setTbldata]=useState([]);
   const [isSubmitting,setIsSubmitting]=useState(false);
   const [modaltitle,setModalTitle]=useState("Add User");
   const [modalDesc,setModalDesc]=useState("Make changes to add users. Click save when you're done.");
-  const [mode,setMode]=useState("A");
+  const [mode,setMode]=useState("");
+  const [userleveldocno,setUserleveldocno]=useState(0);
   const { showConfirm }=useConfirm();
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -71,11 +78,28 @@ export function UserMaster(){
       username: "",
       email: "",
       mobile: "",
-      userlevel: ""
+      roleid: ""
     },
   });
 
-  const handleEdit = (user: typeof tbldata[0]) => {
+  const fetchData=()=>{
+    sendAPIRequest(null,"G","/user/all/"+localStorage.getItem("brhid"),"User").then((response:any)=>{
+      console.log(response);
+      if(response?.data){
+        console.log(response);
+        setTbldata(response.data);
+      }
+    }).catch((error)=>{
+      console.log(error);
+    }).finally(()=>{
+
+    });
+  }
+
+  useEffect(()=>{
+    fetchData();
+  },[]);
+  const handleEdit = (user: TblStructure) => {
     setModalTitle("Edit User");
     setModalDesc("Make changes to edit this user.");
     setMode("E");
@@ -84,18 +108,32 @@ export function UserMaster(){
     form.setValue("fullname", user.fullname);
     form.setValue("email", user.email);
     form.setValue("mobile", user.mobile);
-    form.setValue("userlevel", user.userleveldocno);
+    form.setValue("roleid", user.roleid);
     setIsOpen(true);
     // Implement edit functionality
   };
 
-  const handleDelete = (row: typeof tbldata[0]) => {
+  const handleDelete = (row: TblStructure) => {
     console.log("Deleting:", row);
     setMode("D");
+
+    showConfirm("Are you sure you want to delete this user?", () => {
+      setIsSubmitting(true);
+      sendAPIRequest(row,"D","/user","User")
+        .then(()=>{
+          fetchData();
+        })
+        .catch((error)=>{
+          console.log(error);
+        })
+        .finally(()=>{
+          setIsSubmitting(false);
+        });
+    });
     // Implement delete functionality
   };
 
-  const actions = [
+  const actions:{label:string,onClick:(row:TblStructure)=>void}[] = [
     { label: "Edit", onClick: handleEdit },
     { label: "Delete", onClick: handleDelete },
     // Add more actions as needed
@@ -103,14 +141,25 @@ export function UserMaster(){
 
   
   function onSubmit(values: z.infer<typeof formSchema>) {
-    showConfirm("Are you sure you want to add this user?", () => {
+    let confirmmsg="";
+    if(mode=="A"){
+      confirmmsg="Are you sure you want to add this user?";
+    }
+    else if(mode=="E"){
+      confirmmsg="Are you sure you want to edit this user?"
+    }
+    else if(mode=="D"){
+      confirmmsg="Are you sure you want to delete this user?"
+    }
+    showConfirm(confirmmsg, () => {
       setIsSubmitting(true);
       sendAPIRequest(values,mode,"/user","User")
         .then(()=>{
           setIsOpen(false);
+          fetchData();
         })
         .catch((error)=>{
-          
+          console.log(error);
         })
         .finally(()=>{
           setIsSubmitting(false);
@@ -134,7 +183,7 @@ export function UserMaster(){
               }
             }}>
               <DialogTrigger asChild>
-                <Button variant="outline" onClick={()=>{setMode("A")}}>Add User</Button>
+                <Button variant="outline" onClick={()=>{setMode("A");form.reset();}}>Add User</Button>
               </DialogTrigger>
               <DialogContent className="sm:max-w-[800px] lg:max-w-[1000px] w-full">
                 <DialogHeader>
@@ -143,13 +192,13 @@ export function UserMaster(){
                     {modalDesc}
                   </DialogDescription>
                 </DialogHeader>
-                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8" autoComplete="off">
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 py-4">
                     <FormField control={form.control} name="username" render={({ field }) => (
                       <FormItem>
                         <FormLabel>Username</FormLabel>
                         <FormControl>
-                          <Input placeholder="Username" {...field} />
+                          <Input placeholder="Username" {...field} autoCapitalize="none" autoComplete="text" autoCorrect="off"/>
                         </FormControl>
                         <FormDescription>This is your username for login.</FormDescription>
                         <FormMessage />
@@ -190,17 +239,17 @@ export function UserMaster(){
                       <FormItem>
                         <FormLabel>Password</FormLabel>
                         <FormControl>
-                          <Input type="password" placeholder="Password" {...field} />
+                          <Input type="password" placeholder="Password" {...field} autoCapitalize="none" autoComplete="off" autoCorrect="off"/>
                         </FormControl>
                         <FormDescription>This is your password for login.</FormDescription>
                         <FormMessage />
                       </FormItem>
                     )} />
-                    <FormField control={form.control} name="userlevel" render={({ field }) => (
+                    <FormField control={form.control} name="roleid" render={({ field }) => (
                       <FormItem>
                         <FormLabel>User Level</FormLabel>
                         <FormControl>
-                          <CustDropDown dataLabel="User Level" dataType="userlevel" field={field} onValueChange={(type, value) => form.setValue("userlevel", value)}></CustDropDown>
+                          <CustDropDown dataLabel="User Level" dataType="userlevel" field={field} onValueChange={(type, value) => form.setValue("roleid", value)} value={field.value}></CustDropDown>
                         </FormControl>
                         <FormDescription>This is your permission level.</FormDescription>
                         <FormMessage />
