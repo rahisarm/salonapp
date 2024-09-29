@@ -30,6 +30,12 @@ import { Link } from "react-router-dom"
             <MenubarItem>
               <Link to={"UserMaster"}>User Master</Link>
             </MenubarItem>
+            <MenubarItem>
+              <Link to={"ClientMaster"}>Client Master</Link>
+            </MenubarItem>
+            <MenubarItem>
+              <Link to={"EmployeeMaster"}>Employee Master</Link>
+            </MenubarItem>
           </MenubarContent>
         </MenubarMenu>
         <MenubarMenu>

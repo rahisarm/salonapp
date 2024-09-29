@@ -26,8 +26,11 @@ export function Dashboard(){
         <nav className="flex-col md:flex  fixed top-0 left-0 right-0 z-50">
           <div className="border-b">
             <div className="flex h-16 items-center px-4">
+              <div className="flex items-center justify-between">
               <CustDropDown dataLabel="Branch" dataType="brhid" onValueChange={handleValueChange}></CustDropDown>
               <CustMenuBar className="mx-6"></CustMenuBar>
+              </div>
+              
               <div className="ml-auto flex items-center space-x-4">
                 <ModeToggle></ModeToggle>
                 <UserNav></UserNav>
