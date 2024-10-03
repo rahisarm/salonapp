@@ -33,7 +33,7 @@ const getEndPoint = (dataType: string) => {
 };
 
 type DataItems={
-    docno:number,
+    docno:string,
     refname:string
 }
 // Define the prop types
@@ -57,7 +57,12 @@ export function CustDropDown({ dataType,dataLabel, onValueChange, value: parentV
   React.useEffect(() => {
     // This is the side effect, such as fetching data
     setLoading(true);
-    const endpoint = getEndPoint(dataType);
+    if(dataType=="actype"){
+      setItems([{ docno: 'GL', refname: 'General' },{ docno: 'AR', refname: 'A/c.Recievables' },{ docno: 'AP', refname: 'A/c.Payable' },{ docno: 'HR', refname: 'Employee' }]);
+      setLoading(false);
+    }
+    else{
+      const endpoint = getEndPoint(dataType);
     axiosInstance
       .get(endpoint)
       .then((response) => {
@@ -66,6 +71,7 @@ export function CustDropDown({ dataType,dataLabel, onValueChange, value: parentV
           response.data.map((obj) => {
             if (dataType === "brhid") subitem.push({ docno: obj.docno, refname: obj.branchname });
             if (dataType === "userlevel") subitem.push({ docno: obj.docno, refname: obj.userlevel });
+            
           });
           setItems(subitem);
         } else {
@@ -80,7 +86,8 @@ export function CustDropDown({ dataType,dataLabel, onValueChange, value: parentV
       .finally(() => {
         setLoading(false);
       });
-  
+    }
+    
     // No JSX return, just side effects
     // Optionally return a cleanup function
     return () => {

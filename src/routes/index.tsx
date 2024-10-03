@@ -6,6 +6,9 @@ import { Navigate, Route, Routes } from "react-router-dom";
 import ProtectedRoute from "./ProtectedRoute";
 import { ClientMaster } from "@/pages/masters/ClientMaster";
 import { EmployeeMaster } from "@/pages/masters/EmployeeMaster";
+import { AccountMaster } from "@/pages/masters/AccountMaster";
+import { ProductMaster } from "@/pages/masters/ProductMaster";
+import { ComboMaster } from "@/pages/masters/ComboMaster";
 
 const AppRoutes: React.FC=()=>{
     return (
@@ -15,7 +18,9 @@ const AppRoutes: React.FC=()=>{
                 <Route path="usermaster" element={<ProtectedRoute element={<UserMaster></UserMaster>}></ProtectedRoute>}></Route>
                 <Route path="clientmaster" element={<ProtectedRoute element={<ClientMaster></ClientMaster>}></ProtectedRoute>}></Route>
                 <Route path="employeemaster" element={<ProtectedRoute element={<EmployeeMaster></EmployeeMaster>}></ProtectedRoute>}></Route>
-                
+                <Route path="accountmaster" element={<ProtectedRoute element={<AccountMaster></AccountMaster>}></ProtectedRoute>}></Route>
+                <Route path="productmaster" element={<ProtectedRoute element={<ProductMaster></ProductMaster>}></ProtectedRoute>}></Route>
+                <Route path="combomaster" element={<ProtectedRoute element={<ComboMaster></ComboMaster>}></ProtectedRoute>}></Route>
             </Route>
             
             <Route path='/' element={<Navigate to="/login"></Navigate>}></Route>

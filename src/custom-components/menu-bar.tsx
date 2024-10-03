@@ -36,6 +36,15 @@ import { Link } from "react-router-dom"
             <MenubarItem>
               <Link to={"EmployeeMaster"}>Employee Master</Link>
             </MenubarItem>
+            <MenubarItem>
+              <Link to={"AccountMaster"}>Account Master</Link>
+            </MenubarItem>
+            <MenubarItem>
+              <Link to={"ProductMaster"}>Service Master</Link>
+            </MenubarItem>
+            <MenubarItem>
+              <Link to={"ComboMaster"}>Combo Master</Link>
+            </MenubarItem>
           </MenubarContent>
         </MenubarMenu>
         <MenubarMenu>
