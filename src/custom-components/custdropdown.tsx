@@ -27,6 +27,8 @@ const getEndPoint = (dataType: string) => {
       return "/getUser"; // Replace with actual API URL for locations
     case "userlevel":
       return "/userlevel";
+    case "service":
+      return "/product/all/"+localStorage.getItem("brhid")
     default:
       return "";
   }
@@ -71,7 +73,7 @@ export function CustDropDown({ dataType,dataLabel, onValueChange, value: parentV
           response.data.map((obj) => {
             if (dataType === "brhid") subitem.push({ docno: obj.docno, refname: obj.branchname });
             if (dataType === "userlevel") subitem.push({ docno: obj.docno, refname: obj.userlevel });
-            
+            if (dataType === "service") subitem.push({ docno: obj.docno, refname: obj.refname });
           });
           setItems(subitem);
         } else {

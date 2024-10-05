@@ -1,7 +1,7 @@
 "use client"
 
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { useForm } from "react-hook-form";
+import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod"
 import { z } from "zod"
 import { Input } from "@/components/ui/input";
@@ -14,80 +14,223 @@ import { useConfirm } from "@/custom-components/Confirm";
 import { CustDropDown } from "@/custom-components/custdropdown";
 import { DataTable } from "@/custom-components/DataTable";
 import { sendAPIRequest } from "@/services/common";
-import { Table } from "lucide-react";
-import { TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { DotsHorizontalIcon } from "@radix-ui/react-icons";
+import { Table, TableBody, TableCell, TableHeader, TableRow } from "@/components/ui/table";
+import { DeleteIcon, TrashIcon } from "lucide-react";
 
-const columns=[
-    { key: "docno", label: "Doc No",type:"text" },
-    { key: "refname", label: "Combo Name",type:"text" },
-    { key: "services", label: "Services",type:"button" },
-    { key: "amount", label: "Amount",type:"text" }
-]
-const data=[
-    {
-      "docno": 1,
-      "refname": "Combo1",
-      "fromdate": "2024-10-01",
-      "todate": "2024-10-31",
-      "amount": 600,
-      "description": "Just a Combo",
-      "status": 3,
-      "comboDetailList": [
-        {
-          "docno": 1,
-          "product": {
-            "docno": 1,
-            "refname": "Haircut",
-            "amount": 100,
-            "status": 3
-          }
-        },
-        {
-          "docno": 2,
-          "product": {
-            "docno": 2,
-            "refname": "Shaving",
-            "amount": 80,
-            "status": 3
-          }
-        }
-      ]
-    }
-  ];
-const hiddenColumns=[""]
+interface Product{
+  docno: number;
+  refname: string;
+  amount: number;
+  status: number;
+  userid: number;
+  brhid: number;
+  date: string;
+  vocno: number;
+}
+interface TblStructure{
+  docno:number;
+  refname:string;
+  description:string;
+  amount:number; 
+  service:string;  
+}
+
+const formSchema = z.object({
+  refname: z.string().min(1, {
+      message: "Combo Name is required.",
+  }),
+  description: z.string().optional(), // Optional fields
+  amount: z.number().optional(),
+  docno: z.number().optional(),
+  service: z.string().min(1, {
+    message: "Atleast 1 service should be selected",
+  }),
+});
+
 export function ComboMaster(){
-    
-    const [isOpen,setIsOpen]=useState(false);
-    const [tbldata,setTbldata]=useState([]);
-    const [isSubmitting,setIsSubmitting]=useState(false);
-    const [modaltitle,setModalTitle]=useState("Add Account");
-    const [modalDesc,setModalDesc]=useState("Make changes to add accounts. Click save when you're done.");
-    const [mode,setMode]=useState("");
-    const { showConfirm }=useConfirm();
+  const [tbldata,setTbldata]=useState([]);
+  const [isOpen,setIsOpen]=useState(false);
+  const [mode,setMode]=useState("");
+  const [modaltitle,setModalTitle]=useState("Add Combos");
+  const [modalDesc,setModalDesc]=useState("Make changes to add combos. Click save when you're done.");
+  const { showConfirm }=useConfirm();
+  const [isSubmitting,setIsSubmitting]=useState(false);
+  const [selectedServices,setSelectedServices]=useState<Product[]>([]);
+  const form = useForm<z.infer<typeof formSchema>>({
+    resolver: zodResolver(formSchema),
+    defaultValues: {
+        docno: 0,
+        refname: "",
+        description: "",
+        amount: 0.0,
+        service:""
+    },
+  });
 
+  function onSubmit(values: z.infer<typeof formSchema>) {
+    let confirmmsg="";
+    if(mode=="A"){
+      confirmmsg="Are you sure you want to add this account?";
+    }
+    else if(mode=="E"){
+      confirmmsg="Are you sure you want to edit this account?"
+    }
+    else if(mode=="D"){
+      confirmmsg="Are you sure you want to delete this account?"
+    }
+    showConfirm(confirmmsg, () => {
+        setIsSubmitting(true);
+        sendAPIRequest(values,mode,"/combo","Combo")
+        .then(()=>{
+            setIsOpen(false);
+            fetchData();
+        })
+        .catch((error)=>{
+            console.log(error);
+        })
+        .finally(()=>{
+            setIsSubmitting(false);
+        });
+    });
+  }
 
-    const handleEdit = (user: any) => {
-        
-        // Implement edit functionality
-    };
+  function fetchData(){
 
-    const handleDelete = (row: any) => {
-        console.log("Deleting:", row);
-        
-    };
+  }
 
-    const actions:{label:string,onClick:(row:any)=>void}[] = [
-        { label: "Edit", onClick: handleEdit },
-        { label: "Delete", onClick: handleDelete },
-        // Add more actions as needed
-    ];
-    
-    return (
-        
-        <>
-            
-        </>
-    )
+  function fetchProduct(psrno:string){
+    sendAPIRequest(null,"G","/product/"+psrno,"Service").then((response:any)=>{
+      if(response?.data){
+        setSelectedServices(selectedServices.concat(response.data));
+      }
+    }).catch((error)=>{
+        console.log(error);
+    }).finally(()=>{
+
+    });
+  }
+  function handleService(type:string,value:string){
+    form.setValue("service", value);
+    fetchProduct(value);
+  }
+
+  function removeService(docno:number){
+    setSelectedServices((prevServices) => {
+      // Filter out the service with the matching docno
+      return prevServices.filter((service) => service.docno !== docno);
+    });
+  }
+  return (
+    <>
+      <div className="w-full">
+        <div className="flex items-center justify-between py-4">
+          <h2 className="text-2xl">Combos
+            <Badge variant={"outline"} className="ml-2">{tbldata.length} Accounts</Badge>
+                    </h2>
+
+                    <Form {...form}>
+                        <Dialog open={isOpen} onOpenChange={(open)=>{
+                                setIsOpen(open);
+                                if(!open){
+                                    form.reset();
+                                }
+                            }
+                        }>
+                        <DialogTrigger asChild>
+                            <Button variant="outline" onClick={()=>{setMode("A");form.reset();}}>Add Combos</Button>
+                        </DialogTrigger>
+                        <DialogContent className="sm:max-w-[800px] lg:max-w-[1000px] w-full">
+                            <DialogHeader>
+                                <DialogTitle>{modaltitle}</DialogTitle>
+                                <DialogDescription>{modalDesc}</DialogDescription>
+                            </DialogHeader>
+                            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8" autoComplete="off">
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 py-4">
+                                    <FormField control={form.control} name="refname" render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>Combo Name</FormLabel>
+                                            <FormControl>
+                                              <Input placeholder="Combo Name" {...field} />
+                                            </FormControl>
+                                            <FormDescription>This is the name for your combo.</FormDescription>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )} />
+                                    <FormField control={form.control} name="description" render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>Description</FormLabel>
+                                            <FormControl>
+                                                <Input placeholder="Description" {...field} />
+                                            </FormControl>
+                                            <FormDescription>This is the details about your combo.</FormDescription>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )} />
+                                    <FormField control={form.control} name="amount" render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>Amount</FormLabel>
+                                            <FormControl>
+                                            <Input placeholder="Amount" {...field} />
+                                            </FormControl>
+                                            <FormDescription>This is the amount you charge for combo.</FormDescription>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )} />
+                                    <FormField control={form.control} name="service" render={({ field }) => (
+                                        <FormItem >
+                                            <FormLabel>Services</FormLabel>
+                                            <FormControl>
+                                              <CustDropDown dataLabel="Services" dataType="service" field={field} onValueChange={handleService} value={field.value}></CustDropDown>
+                                            </FormControl>
+                                            <FormDescription>Choose the services you want to add to your combo.</FormDescription>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )} />
+                                    <div className="col-span-2">
+                                      <Table>
+                                        <TableHeader>
+                                        <TableRow>
+                                          <TableCell>Selected Services</TableCell>
+                                          <TableCell>Amount</TableCell>
+                                          <TableCell className="text-right">Actions</TableCell>
+                                        </TableRow>
+                                      </TableHeader>
+                                      <TableBody>
+                                        {selectedServices.map((product:Product) => (
+                                          <TableRow key={product.docno}>
+                                            <TableCell>{product.refname}</TableCell>
+                                            <TableCell>{product.amount}</TableCell>
+                                            <TableCell className="text-right">
+                                              <Button variant={'destructive'} size={'icon'} type="button" onClick={() => removeService(product.docno)}>
+                                                <TrashIcon></TrashIcon>
+                                              </Button>
+                                            </TableCell>
+                                          </TableRow>
+                                        ))}
+                                      </TableBody>
+                                    </Table>
+                                  </div>
+                                    
+                                </div>
+
+                                <DialogFooter>
+                                    <Button variant={'outline'} onClick={()=>{form.reset();setIsOpen(false);}}>Cancel</Button>
+                                    <Button type="submit" disabled={isSubmitting}>
+                                        {isSubmitting && (
+                                            <Icons.spinner className="mr-2 h-4 w-4 animate-spin" />
+                                        )}
+                                        Save changes
+                                    </Button>
+                                </DialogFooter>
+                            </form>
+                        </DialogContent>
+                    </Dialog>
+                </Form>
+            </div>
+            <div className="rounded-md border">
+                
+            </div>
+        </div>
+    </>
+  )
 }
