@@ -68,6 +68,14 @@ export function ComboMaster(){
   });
 
   function onSubmit(values: z.infer<typeof formSchema>) {
+
+    let formdata={
+      ...values,
+      comboDetailList: selectedServices.map((service) => ({
+        psrno: service.docno
+      }))
+    }
+
     let confirmmsg="";
     if(mode=="A"){
       confirmmsg="Are you sure you want to add this account?";
@@ -80,7 +88,7 @@ export function ComboMaster(){
     }
     showConfirm(confirmmsg, () => {
         setIsSubmitting(true);
-        sendAPIRequest(values,mode,"/combo","Combo")
+        sendAPIRequest(formdata,mode,"/combo","Combo")
         .then(()=>{
             setIsOpen(false);
             fetchData();
@@ -95,12 +103,28 @@ export function ComboMaster(){
   }
 
   function fetchData(){
+    sendAPIRequest(null,"G","/combo/all/"+localStorage.getItem("brhid"),"Combo").then((response:any)=>{
+      if(response?.data){
+        console.log('Fetching Combo');
+        console.log(response.data);
+        setTbldata(response.data);
+      }
+    }).catch((error)=>{
+        console.log(error);
+    }).finally(()=>{
 
+    });
   }
+
+  useEffect(()=>{
+    fetchData();
+  },[]);
 
   function fetchProduct(psrno:string){
     sendAPIRequest(null,"G","/product/"+psrno,"Service").then((response:any)=>{
       if(response?.data){
+        console.log('Fetching Product');
+        console.log(response.data);
         setSelectedServices(selectedServices.concat(response.data));
       }
     }).catch((error)=>{
@@ -125,8 +149,56 @@ export function ComboMaster(){
       <div className="w-full">
         <div className="flex items-center justify-between py-4">
           <h2 className="text-2xl">Combos
-            <Badge variant={"outline"} className="ml-2">{tbldata.length} Accounts</Badge>
-                    </h2>
+            <Badge variant={"outline"} className="ml-2">{tbldata.length} Combos</Badge>
+          </h2>
+          {/* <Table>
+            <TableHeader>
+              <TableRow>
+                <TableCell>Combo Name</TableCell>
+                <TableCell>Amount</TableCell>
+                <TableCell>Service Count</TableCell>
+                <TableCell className="text-right">Actions</TableCell>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {combos.map((combo) => (
+                <TableRow key={combo.docno}>
+                  <TableCell>{combo.refname}</TableCell>
+                  <TableCell>{combo.amount}</TableCell>
+                  <TableCell>{combo.serviceCount}</TableCell>
+                  <TableCell className="text-right">
+                    <Button onClick={() => toggleComboDetails(combo.docno)}>
+                      {expandedCombo === combo.docno ? "Hide Services" : "Show Services"}
+                    </Button>
+                  </TableCell>
+                  {expandedCombo === combo.docno && (
+                    <TableRow>
+                      <TableCell colSpan={4}>
+                        <Collapse isOpen={expandedCombo === combo.docno}>
+                          <Table>
+                            <TableHeader>
+                              <TableRow>
+                                <TableCell>Service Name</TableCell>
+                                <TableCell>Amount</TableCell>
+                              </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                              {combo.services.map((service) => (
+                                <TableRow key={service.docno}>
+                                  <TableCell>{service.refname}</TableCell>
+                                  <TableCell>{service.amount}</TableCell>
+                                </TableRow>
+                              ))}
+                            </TableBody>
+                          </Table>
+                        </Collapse>
+                </TableCell>
+              </TableRow>
+            )}
+          </TableRow>
+        ))}
+      </TableBody>
+    </Table> */}
 
                     <Form {...form}>
                         <Dialog open={isOpen} onOpenChange={(open)=>{
@@ -137,7 +209,7 @@ export function ComboMaster(){
                             }
                         }>
                         <DialogTrigger asChild>
-                            <Button variant="outline" onClick={()=>{setMode("A");form.reset();}}>Add Combos</Button>
+                            <Button variant="outline" onClick={()=>{setMode("A");form.reset();setSelectedServices([])}}>Add Combos</Button>
                         </DialogTrigger>
                         <DialogContent className="sm:max-w-[800px] lg:max-w-[1000px] w-full">
                             <DialogHeader>
@@ -167,15 +239,25 @@ export function ComboMaster(){
                                         </FormItem>
                                     )} />
                                     <FormField control={form.control} name="amount" render={({ field }) => (
-                                        <FormItem>
-                                            <FormLabel>Amount</FormLabel>
-                                            <FormControl>
-                                            <Input placeholder="Amount" {...field} />
-                                            </FormControl>
-                                            <FormDescription>This is the amount you charge for combo.</FormDescription>
-                                            <FormMessage />
-                                        </FormItem>
-                                    )} />
+                                      <FormItem>
+                                <FormLabel>Amount</FormLabel>
+    <FormControl>
+      <Input
+        placeholder="Amount"
+        {...field}
+        value={field.value ?? ''} // Ensure the field value is not `null` or `undefined`
+        onChange={(e) => {
+          const value = e.target.value.replace(/[^0-9.]/g, ''); // Restrict to numbers and decimal point
+          field.onChange(value ? parseFloat(value) : ""); // Convert to float or empty string
+        }}
+        type="text" // Keep input type as text to avoid arrows
+        inputMode="decimal" // Use decimal input mode for better UX on mobile devices
+      />
+    </FormControl>
+    <FormDescription>This is the amount you charge for combo.</FormDescription>
+    <FormMessage />
+  </FormItem>
+)} />
                                     <FormField control={form.control} name="service" render={({ field }) => (
                                         <FormItem >
                                             <FormLabel>Services</FormLabel>

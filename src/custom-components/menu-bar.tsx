@@ -40,6 +40,9 @@ import { Link } from "react-router-dom"
               <Link to={"AccountMaster"}>Account Master</Link>
             </MenubarItem>
             <MenubarItem>
+              <Link to={"VendorMaster"}>Vendor Master</Link>
+            </MenubarItem>
+            <MenubarItem>
               <Link to={"ProductMaster"}>Service Master</Link>
             </MenubarItem>
             <MenubarItem>
@@ -50,7 +53,9 @@ import { Link } from "react-router-dom"
         <MenubarMenu>
           <MenubarTrigger>Transactions</MenubarTrigger>
           <MenubarContent>
-            
+          <MenubarItem>
+              <Link to={"Expense"}>Expense</Link>
+            </MenubarItem>
           </MenubarContent>
         </MenubarMenu>
       </Menubar>
