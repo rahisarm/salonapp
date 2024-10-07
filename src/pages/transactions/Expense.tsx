@@ -41,7 +41,9 @@ const formSchema = z.object({
     account: z.string().min(1, {
         message: "Account is required.",
     }),
-    date: z.date().optional(),
+    date: z.date().nullable().refine((val) => val !== null, {
+        message: "Date is required",
+    }),
     exptype: z.string().min(1, {
         message: "Type is required.",
     }),
@@ -68,10 +70,13 @@ const tblcolumns = [
     { key: "date", label: "Date"},
     { key: "acno", label: "Account #" },
     { key: "acname", label: "Account Name" },
-    { key: "type", label: "Expense Type" },
+    { key: "exptype", label: "Expense Type" },
+    { key: "exptypename", label: "Expense Type" },
     { key: "paytype", label: "Payment Type" },
+    { key: "paytypename", label: "Payment Type" },
     { key: "paytypeno", label: "Payment Ref #" },
     { key: "vendor", label: "Vendor" },
+    { key: "vendorname", label: "Vendor" },
     { key: "amount", label: "Amount" },
     { key: "tax", label: "Tax" },
     { key: "nettotal", label: "Net Total" },
@@ -80,7 +85,7 @@ const tblcolumns = [
 
 ];
   
-const tblHiddenColumns = ["acno","tax","billno","remarks"];
+const tblHiddenColumns = ["acno","tax","billno","remarks","exptype","paytype","vendor"];
 
 
 export function Expense(){
@@ -126,6 +131,7 @@ export function Expense(){
     const fetchData=()=>{
         sendAPIRequest(null,"G","/expense/all/"+localStorage.getItem("brhid"),"Expense").then((response:any)=>{
             if(response?.data){
+                console.log(response.data);
                 setTbldata(response.data);
             }
         }).catch((error)=>{
@@ -187,6 +193,7 @@ export function Expense(){
           confirmmsg="Are you sure you want to delete this expense?"
         }
         showConfirm(confirmmsg, () => {
+            console.log(values);
             setIsSubmitting(true);
             sendAPIRequest(values,mode,"/expense","Expense")
             .then(()=>{
@@ -233,7 +240,7 @@ export function Expense(){
                                         <FormItem >
                                             <FormLabel>Date</FormLabel>
                                             <FormControl>
-                                                <DatePicker></DatePicker>
+                                                <DatePicker value={field.value} onChange={field.onChange}></DatePicker>
                                             </FormControl>
                                             <FormDescription>This is your expense date.</FormDescription>
                                             <FormMessage />
@@ -263,7 +270,7 @@ export function Expense(){
                                         <FormItem >
                                             <FormLabel>Payment Type</FormLabel>
                                             <FormControl>
-                                            <InsertDropdown dataLabel="Payment Type" dataType="paytype" field={field} onValueChange={(type, value) => form.setValue("paytype", value)} value={field.value}></InsertDropdown>
+                                                <CustDropDown dataLabel="Payment Type" dataType="paytype" field={field} onValueChange={(type, value) => form.setValue("paytype", value)} value={field.value}></CustDropDown>
                                             </FormControl>
                                             <FormDescription>This is your payment type like Cash/Card/Cheque/UPI.</FormDescription>
                                             <FormMessage />

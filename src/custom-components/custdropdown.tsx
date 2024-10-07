@@ -39,6 +39,8 @@ const getEndPoint = (dataType: string) => {
       return "/account/ap/"+localStorage.getItem("brhid")
     case "hraccount":
       return "/account/hr/"+localStorage.getItem("brhid")
+    case "paytype":
+      return "/paytype/all";
     default:
       return "";
   }
@@ -83,7 +85,7 @@ export function CustDropDown({ dataType,dataLabel, onValueChange, value: parentV
           response.data.map((obj) => {
             if (dataType === "brhid") subitem.push({ docno: obj.docno, refname: obj.branchname });
             if (dataType === "userlevel") subitem.push({ docno: obj.docno, refname: obj.userlevel });
-            if (dataType === "service" || dataType==="vendor") subitem.push({ docno: obj.docno, refname: obj.refname });
+            if (dataType === "service" || dataType==="vendor" || dataType==="paytype") subitem.push({ docno: obj.docno, refname: obj.refname });
             if (dataType === "glaccount" || dataType === "araccount" || dataType === "apaccount" || dataType === "hraccount") subitem.push({ docno: obj.docno, refname: obj.acname });
           });
           setItems(subitem);
