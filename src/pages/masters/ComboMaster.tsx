@@ -16,6 +16,9 @@ import { DataTable } from "@/custom-components/DataTable";
 import { sendAPIRequest } from "@/services/common";
 import { Table, TableBody, TableCell, TableHeader, TableRow } from "@/components/ui/table";
 import { DeleteIcon, TrashIcon } from "lucide-react";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { DotsHorizontalIcon } from "@radix-ui/react-icons";
 
 interface Product{
   docno: number;
@@ -32,7 +35,11 @@ interface TblStructure{
   refname:string;
   description:string;
   amount:number; 
-  service:string;  
+  comboDetailList:[];
+  date:Date;
+  fromdate:Date;
+  todate:Date;
+
 }
 
 const formSchema = z.object({
@@ -50,6 +57,7 @@ const formSchema = z.object({
 export function ComboMaster(){
   const [tbldata,setTbldata]=useState([]);
   const [isOpen,setIsOpen]=useState(false);
+  const [isCollapseOpen,setIsCollapseOpen]=useState(false);
   const [mode,setMode]=useState("");
   const [modaltitle,setModalTitle]=useState("Add Combos");
   const [modalDesc,setModalDesc]=useState("Make changes to add combos. Click save when you're done.");
@@ -144,6 +152,23 @@ export function ComboMaster(){
       return prevServices.filter((service) => service.docno !== docno);
     });
   }
+
+  const handleDelete = (row: TblStructure) => {
+   
+  };
+  const handleEdit = (row: TblStructure) => {
+   
+  };
+  const actions:{label:string,onClick:(row:TblStructure)=>void}[] = [
+    { label: "Edit", onClick: handleEdit },
+    { label: "Delete", onClick: handleDelete },
+    // Add more actions as needed
+  ];
+  const [openRows, setOpenRows] = useState<Record<number, boolean>>({});
+
+const toggleCollapse = (docno: number) => {
+  setOpenRows(prev => ({ ...prev, [docno]: !prev[docno] }));
+};
   return (
     <>
       <div className="w-full">
@@ -151,54 +176,70 @@ export function ComboMaster(){
           <h2 className="text-2xl">Combos
             <Badge variant={"outline"} className="ml-2">{tbldata.length} Combos</Badge>
           </h2>
-          {/* <Table>
-            <TableHeader>
-              <TableRow>
-                <TableCell>Combo Name</TableCell>
-                <TableCell>Amount</TableCell>
-                <TableCell>Service Count</TableCell>
-                <TableCell className="text-right">Actions</TableCell>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {combos.map((combo) => (
-                <TableRow key={combo.docno}>
-                  <TableCell>{combo.refname}</TableCell>
-                  <TableCell>{combo.amount}</TableCell>
-                  <TableCell>{combo.serviceCount}</TableCell>
-                  <TableCell className="text-right">
-                    <Button onClick={() => toggleComboDetails(combo.docno)}>
-                      {expandedCombo === combo.docno ? "Hide Services" : "Show Services"}
-                    </Button>
-                  </TableCell>
-                  {expandedCombo === combo.docno && (
-                    <TableRow>
-                      <TableCell colSpan={4}>
-                        <Collapse isOpen={expandedCombo === combo.docno}>
-                          <Table>
-                            <TableHeader>
-                              <TableRow>
-                                <TableCell>Service Name</TableCell>
-                                <TableCell>Amount</TableCell>
-                              </TableRow>
-                            </TableHeader>
-                            <TableBody>
-                              {combo.services.map((service) => (
-                                <TableRow key={service.docno}>
-                                  <TableCell>{service.refname}</TableCell>
-                                  <TableCell>{service.amount}</TableCell>
-                                </TableRow>
-                              ))}
-                            </TableBody>
-                          </Table>
-                        </Collapse>
+          <Table>
+          <TableHeader>
+            <TableRow>
+              <TableCell>Doc No</TableCell>
+              <TableCell>Name</TableCell>
+              <TableCell>Services Count</TableCell>
+              <TableCell>Amount</TableCell>
+              <TableCell>Action</TableCell>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {tbldata.map((row:any, index) => (
+              <TableRow key={index}>
+                <TableCell>{row.docno}</TableCell>
+                <TableCell>{row.refname}</TableCell>
+                <TableCell>
+                  <Collapsible open={openRows[row.docno] ?? false}>
+                    <CollapsibleTrigger asChild>
+                      <Button variant="ghost" onClick={() => toggleCollapse(row.docno)}>
+                        {row.comboDetailList.length} Services
+                      </Button>
+                    </CollapsibleTrigger>
+                    <CollapsibleContent>
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableCell>Service</TableCell>
+                            <TableCell>Amount</TableCell>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {row.comboDetailList.map((detail:any) => (
+                            <TableRow key={detail.psrno}>
+                              <TableCell>{detail.refname}</TableCell>
+                              <TableCell>{detail.amount}</TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    </CollapsibleContent>
+                  </Collapsible>
+                </TableCell>
+                <TableCell>{row.amount}</TableCell>
+                <TableCell>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="ghost">
+                        <DotsHorizontalIcon />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent>
+                      <DropdownMenuItem onClick={() => handleEdit(row)}>
+                        Edit
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => handleDelete(row)}>
+                        Delete
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
                 </TableCell>
               </TableRow>
-            )}
-          </TableRow>
-        ))}
-      </TableBody>
-    </Table> */}
+            ))}
+          </TableBody>
+        </Table>
 
                     <Form {...form}>
                         <Dialog open={isOpen} onOpenChange={(open)=>{

@@ -23,16 +23,17 @@ import { number } from "yup";
 interface TblStructure{
     docno:number;
     date:Date;
-    acname:string;
-    acno:string;
+    account:string;
+    accountname:string;
     exptype:string;
-    exptypeno:string;
+    exptypename:string;
     paytype:string;
+    paytypename:string;
     paytypeno:string;
-    amount:number;
+    amount:string;
     vendor:string;
-    tax:number;
-    nettotal:number;
+    tax:string;
+    nettotal:string;
     billno:string;
     remarks:string;   
 }
@@ -68,8 +69,8 @@ const tblcolumns = [
 
     { key: "docno", label: "Doc No" },
     { key: "date", label: "Date"},
-    { key: "acno", label: "Account #" },
-    { key: "acname", label: "Account Name" },
+    { key: "account", label: "Account #" },
+    { key: "accountname", label: "Account Name" },
     { key: "exptype", label: "Expense Type" },
     { key: "exptypename", label: "Expense Type" },
     { key: "paytype", label: "Payment Type" },
@@ -85,7 +86,7 @@ const tblcolumns = [
 
 ];
   
-const tblHiddenColumns = ["acno","tax","billno","remarks","exptype","paytype","vendor"];
+const tblHiddenColumns = ["acno","tax","billno","remarks","exptype","paytype","vendor","account"];
 
 
 export function Expense(){
@@ -149,6 +150,18 @@ export function Expense(){
         setModalTitle("Edit Expense");
         setModalDesc("Make changes to edit this expense.");
         setMode("E");
+        form.setValue("docno", user.docno);
+        form.setValue("date", user.date);
+        form.setValue("account", user.account+"");
+        form.setValue("exptype", user.exptype+"");
+        form.setValue("paytype", user.paytype+"");
+        form.setValue("paytypeno", user.paytypeno+"");
+        form.setValue("amount", user.amount+"");
+        form.setValue("tax", user.tax+"");
+        form.setValue("vendor", user.vendor+"");
+        form.setValue("nettotal", user.nettotal+"");
+        form.setValue("billno", user.billno+"");
+        form.setValue("remarks", user.remarks+"");
         setIsOpen(true);
         // Implement edit functionality
     };

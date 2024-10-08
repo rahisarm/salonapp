@@ -47,7 +47,7 @@ const getEndPoint = (dataType: string) => {
 
 export function InsertDropdown({ dataType,dataLabel, onValueChange, value: parentValue,field }: FrameworkProps) {
   const [open, setOpen] = React.useState(false);
-  const [value, setValue] = React.useState("");
+  const [value, setValue] = React.useState(parentValue || (field ? field.value+"" : "")); 
   const [searchTerm, setSearchTerm] = React.useState("");
   const [frameworks, setFrameworks] = React.useState<FrameworkBase[]>([]);
   const [loading, setLoading] = React.useState(false); // Track loading state
@@ -88,6 +88,13 @@ export function InsertDropdown({ dataType,dataLabel, onValueChange, value: paren
     };
   }, [dataType]); // Dependencies for the effect
 
+  React.useEffect(() => {
+    if (parentValue !== undefined) {
+        console.log('Parent Value Changed:'+parentValue);
+        setValue(parentValue+"");
+    } 
+  }, [parentValue]);
+  
   const handleSelect = (currentValue: string) => {
     const newValue = currentValue === value ? "" : currentValue;
     setValue(newValue);

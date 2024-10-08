@@ -2,6 +2,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"; // Assuming you have a Dropdown component
 import { DotsHorizontalIcon } from "@radix-ui/react-icons";
+import { format } from "date-fns";
 
 interface Column {
   key: string;
@@ -39,7 +40,7 @@ export function DataTable<T extends Record<string, any>>({ columns, data, action
             {columns.map((column) => (
               !hiddenColumns.includes(column.key) && (
                 <TableCell key={column.key}>
-                  {row[column.key as keyof T]}
+                  {column.key=='date'?format(row[column.key as keyof T],'dd-MM-yyyy'):row[column.key as keyof T]}
                 </TableCell>
               )
             ))}
