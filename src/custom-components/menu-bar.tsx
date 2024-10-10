@@ -53,8 +53,11 @@ import { Link } from "react-router-dom"
         <MenubarMenu>
           <MenubarTrigger>Transactions</MenubarTrigger>
           <MenubarContent>
-          <MenubarItem>
+            <MenubarItem>
               <Link to={"Expense"}>Expense</Link>
+            </MenubarItem>
+            <MenubarItem>
+              <Link to={"Invoice"}>Invoice</Link>
             </MenubarItem>
           </MenubarContent>
         </MenubarMenu>

@@ -11,6 +11,7 @@ import { ProductMaster } from "@/pages/masters/ProductMaster";
 import { ComboMaster } from "@/pages/masters/ComboMaster";
 import { Expense } from "@/pages/transactions/Expense";
 import { VendorMaster } from "@/pages/masters/VendorMaster";
+import { Invoice } from "@/pages/transactions/Invoice";
 
 const AppRoutes: React.FC=()=>{
     return (
@@ -25,6 +26,7 @@ const AppRoutes: React.FC=()=>{
                 <Route path="combomaster" element={<ProtectedRoute element={<ComboMaster></ComboMaster>}></ProtectedRoute>}></Route>
                 <Route path="vendormaster" element={<ProtectedRoute element={<VendorMaster></VendorMaster>}></ProtectedRoute>}></Route>
                 <Route path="expense" element={<ProtectedRoute element={<Expense></Expense>}></ProtectedRoute>}></Route>
+                <Route path="invoice" element={<ProtectedRoute element={<Invoice></Invoice>}></ProtectedRoute>}></Route>
             </Route>
             
             <Route path='/' element={<Navigate to="/login"></Navigate>}></Route>

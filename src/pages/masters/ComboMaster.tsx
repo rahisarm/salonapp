@@ -14,11 +14,15 @@ import { useConfirm } from "@/custom-components/Confirm";
 import { CustDropDown } from "@/custom-components/custdropdown";
 import { DataTable } from "@/custom-components/DataTable";
 import { sendAPIRequest } from "@/services/common";
-import { Table, TableBody, TableCell, TableHeader, TableRow } from "@/components/ui/table";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { DeleteIcon, TrashIcon } from "lucide-react";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { DotsHorizontalIcon } from "@radix-ui/react-icons";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import { AccordionHeader } from "@radix-ui/react-accordion";
+import React from "react";
+import { toast } from "@/hooks/use-toast";
 
 interface Product{
   docno: number;
@@ -49,21 +53,30 @@ const formSchema = z.object({
   description: z.string().optional(), // Optional fields
   amount: z.number().optional(),
   docno: z.number().optional(),
-  service: z.string().min(1, {
-    message: "Atleast 1 service should be selected",
-  }),
+  service: z.string().optional(),
 });
 
 export function ComboMaster(){
   const [tbldata,setTbldata]=useState([]);
   const [isOpen,setIsOpen]=useState(false);
-  const [isCollapseOpen,setIsCollapseOpen]=useState(false);
+  const [isCollapseOpen]=useState(false);
   const [mode,setMode]=useState("");
   const [modaltitle,setModalTitle]=useState("Add Combos");
   const [modalDesc,setModalDesc]=useState("Make changes to add combos. Click save when you're done.");
   const { showConfirm }=useConfirm();
   const [isSubmitting,setIsSubmitting]=useState(false);
   const [selectedServices,setSelectedServices]=useState<Product[]>([]);
+  const [expandedCombos, setExpandedCombos] = useState<number[]>([]);
+
+  // Toggle the visibility of combo details
+  const toggleCombo = (docno: number) => {
+    if (expandedCombos.includes(docno)) {
+      setExpandedCombos(expandedCombos.filter(id => id !== docno));
+    } else {
+      setExpandedCombos([...expandedCombos, docno]);
+    }
+  };
+
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -76,7 +89,14 @@ export function ComboMaster(){
   });
 
   function onSubmit(values: z.infer<typeof formSchema>) {
-
+    if(selectedServices.length==0){
+      toast({
+        title: "Services are mandatory",
+        description: `Minimum 1 service is needed.`,
+        variant: "destructive",
+      });
+      return false;
+    }
     let formdata={
       ...values,
       comboDetailList: selectedServices.map((service) => ({
@@ -86,13 +106,13 @@ export function ComboMaster(){
 
     let confirmmsg="";
     if(mode=="A"){
-      confirmmsg="Are you sure you want to add this account?";
+      confirmmsg="Are you sure you want to add this combo?";
     }
     else if(mode=="E"){
-      confirmmsg="Are you sure you want to edit this account?"
+      confirmmsg="Are you sure you want to edit this combo?"
     }
     else if(mode=="D"){
-      confirmmsg="Are you sure you want to delete this account?"
+      confirmmsg="Are you sure you want to delete this combo?"
     }
     showConfirm(confirmmsg, () => {
         setIsSubmitting(true);
@@ -142,8 +162,21 @@ export function ComboMaster(){
     });
   }
   function handleService(type:string,value:string){
-    form.setValue("service", value);
-    fetchProduct(value);
+    
+    const isSelected=selectedServices.some((service)=>(service.docno+"")===value);
+    if(isSelected){
+      toast({
+        title: "Duplicate Service",
+        description: `The selected service is already in the list.`,
+        variant: "destructive",
+      });
+      return false;
+    }
+    else{
+      form.setValue("service", value);
+      fetchProduct(value);
+    }
+    
   }
 
   function removeService(docno:number){
@@ -154,10 +187,33 @@ export function ComboMaster(){
   }
 
   const handleDelete = (row: TblStructure) => {
-   
+    setMode("D");
+    
+        showConfirm("Are you sure you want to delete this combo?", () => {
+            setIsSubmitting(true);
+            sendAPIRequest(row,"D","/combo","Combo")
+            .then(()=>{
+                fetchData();
+            })
+            .catch((error)=>{
+                console.log(error);
+            })
+            .finally(()=>{
+                setIsSubmitting(false);
+            });
+        });
   };
-  const handleEdit = (row: TblStructure) => {
-   
+  const handleEdit = (user: TblStructure) => {
+    setModalTitle("Edit Combo");
+    setModalDesc("Make changes to edit this combo.");
+    setMode("E");
+    form.setValue("docno", user.docno);
+    form.setValue("refname", user.refname);
+    form.setValue("amount", user.amount);
+    form.setValue("description", user.description);
+    setSelectedServices(user.comboDetailList);
+    
+    setIsOpen(true);
   };
   const actions:{label:string,onClick:(row:TblStructure)=>void}[] = [
     { label: "Edit", onClick: handleEdit },
@@ -176,70 +232,7 @@ const toggleCollapse = (docno: number) => {
           <h2 className="text-2xl">Combos
             <Badge variant={"outline"} className="ml-2">{tbldata.length} Combos</Badge>
           </h2>
-          <Table>
-          <TableHeader>
-            <TableRow>
-              <TableCell>Doc No</TableCell>
-              <TableCell>Name</TableCell>
-              <TableCell>Services Count</TableCell>
-              <TableCell>Amount</TableCell>
-              <TableCell>Action</TableCell>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {tbldata.map((row:any, index) => (
-              <TableRow key={index}>
-                <TableCell>{row.docno}</TableCell>
-                <TableCell>{row.refname}</TableCell>
-                <TableCell>
-                  <Collapsible open={openRows[row.docno] ?? false}>
-                    <CollapsibleTrigger asChild>
-                      <Button variant="ghost" onClick={() => toggleCollapse(row.docno)}>
-                        {row.comboDetailList.length} Services
-                      </Button>
-                    </CollapsibleTrigger>
-                    <CollapsibleContent>
-                      <Table>
-                        <TableHeader>
-                          <TableRow>
-                            <TableCell>Service</TableCell>
-                            <TableCell>Amount</TableCell>
-                          </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                          {row.comboDetailList.map((detail:any) => (
-                            <TableRow key={detail.psrno}>
-                              <TableCell>{detail.refname}</TableCell>
-                              <TableCell>{detail.amount}</TableCell>
-                            </TableRow>
-                          ))}
-                        </TableBody>
-                      </Table>
-                    </CollapsibleContent>
-                  </Collapsible>
-                </TableCell>
-                <TableCell>{row.amount}</TableCell>
-                <TableCell>
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="ghost">
-                        <DotsHorizontalIcon />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent>
-                      <DropdownMenuItem onClick={() => handleEdit(row)}>
-                        Edit
-                      </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => handleDelete(row)}>
-                        Delete
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
+          
 
                     <Form {...form}>
                         <Dialog open={isOpen} onOpenChange={(open)=>{
@@ -351,7 +344,73 @@ const toggleCollapse = (docno: number) => {
                 </Form>
             </div>
             <div className="rounded-md border">
-                
+            <Table>
+      <TableHeader>
+        <TableHead>Doc No</TableHead>
+        <TableHead>Name</TableHead>
+        <TableHead>Services</TableHead>
+        <TableHead>Amount</TableHead>
+        <TableHead>Action</TableHead>
+      </TableHeader>
+      <TableBody>
+        {tbldata.map((combo: any) => (
+          <React.Fragment key={combo.docno}>
+            {/* Main combo row */}
+            <TableRow>
+              <TableCell>{combo.docno}</TableCell>
+              <TableCell>{combo.refname}</TableCell>
+              <TableCell>
+              <Button variant="outline" size="sm" onClick={() => toggleCombo(combo.docno)}>
+                  {combo.comboDetailList.length} Services
+                </Button>
+              </TableCell>
+              <TableCell>{combo.amount}</TableCell>
+              <TableCell>
+                <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="ghost">
+                        <DotsHorizontalIcon />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent>
+                      <DropdownMenuItem onClick={() => handleEdit(combo)}>
+                        Edit
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => handleDelete(combo)}>
+                        Delete
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+              </TableCell>
+            </TableRow>
+
+            {/* Collapsible combo details */}
+            {expandedCombos.includes(combo.docno) && combo.comboDetailList && combo.comboDetailList.length > 0 && (
+              <TableRow>
+                <TableCell colSpan={5} className="p-0">
+                  <Table>
+                    <TableHeader>
+                      <TableHead>Service Doc No</TableHead>
+                      <TableHead>Service Name</TableHead>
+                      <TableHead>Amount</TableHead>
+                    </TableHeader>
+                    <TableBody>
+                      {combo.comboDetailList.map((detail: any) => (
+                        <TableRow key={detail.docno}>
+                          <TableCell>{detail.docno}</TableCell>
+                          <TableCell>{detail.refname}</TableCell>
+                          <TableCell>{detail.amount}</TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </TableCell>
+              </TableRow>
+            )}
+          </React.Fragment>
+        ))}
+      </TableBody>
+    </Table>
             </div>
         </div>
     </>

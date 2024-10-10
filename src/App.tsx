@@ -1,6 +1,5 @@
-import { useState } from 'react'
 import './App.css'
-import { Navigate, Route, BrowserRouter as Router, Routes } from 'react-router-dom'
+import { BrowserRouter as Router } from 'react-router-dom'
 
 import AppRoutes from './routes'
 import { ThemeProvider } from './custom-components/theme-provider'
