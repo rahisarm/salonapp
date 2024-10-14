@@ -25,6 +25,8 @@ import React from "react";
 import { toast } from "@/hooks/use-toast";
 import { DatePicker } from "@/custom-components/datepicker";
 import { InsertDropdown } from "@/custom-components/InsertDropdown";
+import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
+import { ServiceDropdown } from "@/custom-components/ServiceDropdown";
 
 interface Service{
   docno: number;
@@ -184,12 +186,32 @@ export function Invoice(){
     fetchData();
   },[]);
 
-  function fetchProduct(psrno:string){
-    sendAPIRequest(null,"G","/product/"+psrno,"Service").then((response:any)=>{
+  function fetchProduct(psrno:string,itemtype:string){
+    let endpoint="";
+    console.log("fetch :"+itemtype);
+    if(itemtype=="Service"){
+        endpoint="/product/"+psrno;
+    }
+    else if(itemtype=="Combo"){
+        endpoint="/combo/"+psrno;
+    }
+    sendAPIRequest(null,"G",endpoint,itemtype).then((response:any)=>{
       if(response?.data){
-        console.log('Fetching Product');
         console.log(response.data);
-        setSelectedServices(selectedServices.concat(response.data));
+        setSelectedServices((prevServices) => {
+            // Assuming response.data is an array of the new service data
+            const updatedServices = prevServices.concat(response.data);
+
+            // Calculate the total amount including the newly fetched services
+            const totalAmount = updatedServices.reduce((total: number, service: Service) => {
+                return total + (service.amount || 0); // Default to 0 if amount is undefined
+            }, 0);
+
+            // Update the total in the form
+            form.setValue("total", totalAmount+"");
+
+            return updatedServices; // Return the updated services for state
+        });
       }
     }).catch((error)=>{
         console.log(error);
@@ -197,9 +219,9 @@ export function Invoice(){
 
     });
   }
-  function handleService(type:string,value:string){
-    
-    const isSelected=selectedServices.some((service)=>(service.docno+"")===value);
+  function handleService(datatype:string,value:string,itemtype:string){
+    console.log("Inside Select"+datatype+"::"+value+"::"+itemtype);
+    const isSelected=selectedServices.some((service)=>(service.docno+"")==value && service.servicetype==itemtype);
     if(isSelected){
       toast({
         title: "Duplicate Service",
@@ -210,15 +232,27 @@ export function Invoice(){
     }
     else{
       form.setValue("service", value);
-      fetchProduct(value);
+      fetchProduct(value,itemtype);
     }
     
   }
 
   function removeService(docno:number,servicetype:string){
+    console.log('Remove Item:'+docno+'::'+servicetype);
     setSelectedServices((prevServices) => {
-      // Filter out the service with the matching docno
-      return prevServices.filter((service) => service.docno !== docno && service.servicetype!==servicetype);
+        // Filter out the service/combo with the matching docno and itemtype
+        const updatedServices = prevServices.filter(
+            service => !(service.docno == docno && service.servicetype == servicetype)
+        );
+
+        // Recalculate the total after removal
+        const totalAmount = updatedServices.reduce((total: number, service: Service) => {
+            return total + (service.amount || 0);
+        }, 0);
+
+        form.setValue("total", totalAmount+""); // Update the form's total value
+
+        return updatedServices; // Return the updated service list
     });
   }
 
@@ -306,7 +340,7 @@ const toggleCollapse = (docno: number) => {
                                         <FormItem>
                                             <FormLabel>Mobile</FormLabel>
                                             <FormControl>
-                                                <InsertDropdown dataLabel="Customer Mobile" dataType="cldocno" field={field} onValueChange={(type, value) => form.setValue("cldocno", value)} value={field.value}></InsertDropdown>
+                                                <InsertDropdown dataLabel="Customer Mobile" dataType="clientmobile" field={field} onValueChange={(type, value) => form.setValue("cldocno", value)} value={field.value}></InsertDropdown>
                                             </FormControl>
                                             <FormDescription>This is the customer mobile number.</FormDescription>
                                             <FormMessage />
@@ -326,77 +360,85 @@ const toggleCollapse = (docno: number) => {
                                         <FormItem >
                                             <FormLabel>Services</FormLabel>
                                             <FormControl>
-                                              <CustDropDown dataLabel="Services" dataType="service" field={field} onValueChange={handleService} value={field.value}></CustDropDown>
+                                              {/* <CustDropDown dataLabel="Services" dataType="service" field={field} onValueChange={handleService} value={field.value}></CustDropDown> */}
+                                                <ServiceDropdown dataLabel="Service|Combo" dataType="servicecombo" field={field} onValueChange={handleService}></ServiceDropdown>
                                             </FormControl>
                                             <FormDescription>Choose the services you want to add to your combo.</FormDescription>
                                             <FormMessage />
                                         </FormItem>
                                     )} />
-                                    <div className="col-span-2 border rounded">
-                                        <Table>
-                                            <TableHeader>
-                                                <TableRow>
-                                                    <TableCell>Selected Services</TableCell>
-                                                    <TableCell>Amount</TableCell>
-                                                    <TableCell className="text-right">Actions</TableCell>
-                                                </TableRow>
-                                            </TableHeader>
-                                            <TableBody>
-                                                {selectedServices.map((service:Service) => (
-                                                    <TableRow key={service.docno}>
-                                                        <TableCell>{service.refname}</TableCell>
-                                                        <TableCell>{service.amount}</TableCell>
-                                                        <TableCell className="text-right">
-                                                            <Button variant={'destructive'} size={'icon'} type="button" onClick={() => removeService(service.docno,service.servicetype)}>
-                                                                <TrashIcon></TrashIcon>
-                                                            </Button>
-                                                        </TableCell>
+                                    <div className="border rounded">
+                                        <ScrollArea className="h-[400px] w-full overflow-auto">
+                                            <Table>
+                                                <TableHeader>
+                                                    <TableRow>
+                                                        <TableCell>Selected Services</TableCell>
+                                                        <TableCell>Amount</TableCell>
+                                                        <TableCell className="text-right">Actions</TableCell>
                                                     </TableRow>
-                                                ))}
-                                            </TableBody>
-                                        </Table>
+                                                </TableHeader>
+                                                <TableBody>
+                                                    {selectedServices.map((service:Service) => (
+                                                        <TableRow key={service.servicetype+"-"+service.docno}>
+                                                            <TableCell>{service.refname}</TableCell>
+                                                            <TableCell>{service.amount}</TableCell>
+                                                            <TableCell className="text-right">
+                                                                <Button variant={'destructive'} size={'icon'} type="button" onClick={() => removeService(service.docno,service.servicetype)}>
+                                                                    <TrashIcon></TrashIcon>
+                                                                </Button>
+                                                            </TableCell>
+                                                        </TableRow>
+                                                    ))}
+                                                </TableBody>
+                                            </Table>
+                                            <ScrollBar></ScrollBar>
+                                        </ScrollArea>
+                                        
+                                    </div>
+                                    <div className="border rounded px-2 py-2">
+                                        <FormField control={form.control} name="total" render={({ field }) => (
+                                            <FormItem>
+                                                <FormLabel>Total</FormLabel>
+                                                <FormControl>
+                                                    <Input placeholder="Total" {...field} type="text" inputMode="decimal"/>
+                                                </FormControl>
+                                                <FormDescription>This is the total invoice amount.</FormDescription>
+                                                <FormMessage />
+                                            </FormItem>
+                                        )} />
+                                        <FormField control={form.control} name="discount" render={({ field }) => (
+                                            <FormItem>
+                                                <FormLabel>Discount</FormLabel>
+                                                <FormControl>
+                                                    <Input placeholder="Discount" {...field} type="text" inputMode="decimal"/>
+                                                </FormControl>
+                                                <FormDescription>This is your discount over total bill amount.</FormDescription>
+                                                <FormMessage />
+                                            </FormItem>
+                                        )} />
+                                        <FormField control={form.control} name="tax" render={({ field }) => (
+                                            <FormItem>
+                                                <FormLabel>Tax</FormLabel>
+                                                <FormControl>
+                                                    <Input placeholder="Tax" {...field} type="text" inputMode="decimal"/>
+                                                </FormControl>
+                                                <FormDescription>This is your tax over invoice amount.</FormDescription>
+                                                <FormMessage />
+                                            </FormItem>
+                                        )} />
+                                        <FormField control={form.control} name="nettotal" render={({ field }) => (
+                                            <FormItem>
+                                                <FormLabel>Net Total</FormLabel>
+                                                <FormControl>
+                                                    <Input placeholder="Net Total" {...field} type="text" inputMode="decimal"/>
+                                                </FormControl>
+                                                <FormDescription>This is your net total amount.</FormDescription>
+                                                <FormMessage />
+                                            </FormItem>
+                                        )} />
                                     </div>
 
-                                    <FormField control={form.control} name="total" render={({ field }) => (
-                                        <FormItem>
-                                            <FormLabel>Total</FormLabel>
-                                            <FormControl>
-                                                <Input placeholder="Total" {...field} type="text" inputMode="decimal"/>
-                                            </FormControl>
-                                            <FormDescription>This is the total invoice amount.</FormDescription>
-                                            <FormMessage />
-                                        </FormItem>
-                                    )} />
-                                    <FormField control={form.control} name="discount" render={({ field }) => (
-                                        <FormItem>
-                                            <FormLabel>Discount</FormLabel>
-                                            <FormControl>
-                                                <Input placeholder="Discount" {...field} type="text" inputMode="decimal"/>
-                                            </FormControl>
-                                            <FormDescription>This is your discount over total bill amount.</FormDescription>
-                                            <FormMessage />
-                                        </FormItem>
-                                    )} />
-                                    <FormField control={form.control} name="tax" render={({ field }) => (
-                                        <FormItem>
-                                            <FormLabel>Tax</FormLabel>
-                                            <FormControl>
-                                                <Input placeholder="Tax" {...field} type="text" inputMode="decimal"/>
-                                            </FormControl>
-                                            <FormDescription>This is your tax over invoice amount.</FormDescription>
-                                            <FormMessage />
-                                        </FormItem>
-                                    )} />
-                                    <FormField control={form.control} name="nettotal" render={({ field }) => (
-                                        <FormItem>
-                                            <FormLabel>Net Total</FormLabel>
-                                            <FormControl>
-                                                <Input placeholder="Net Total" {...field} type="text" inputMode="decimal"/>
-                                            </FormControl>
-                                            <FormDescription>This is your net total amount.</FormDescription>
-                                            <FormMessage />
-                                        </FormItem>
-                                    )} />
+                                    
                                     
                                 </div>
 

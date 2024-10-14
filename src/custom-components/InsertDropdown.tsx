@@ -20,6 +20,7 @@ import {
 import axios from "axios"; // Import axios
 import { sendAPIRequest } from "@/services/common";
 import axiosInstance from "@/services/axiosInstance";
+import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 
 interface FrameworkBase{
   value:string;
@@ -40,6 +41,8 @@ const getEndPoint = (dataType: string) => {
       return "/exptype/all/"+localStorage.getItem("brhid");
     case "paytype":
       return "/paytype/all";
+    case "clientmobile":
+      return "/client/all/"+localStorage.getItem("brhid");
     default:
       return "";
   }
@@ -53,7 +56,7 @@ export function InsertDropdown({ dataType,dataLabel, onValueChange, value: paren
   const [loading, setLoading] = React.useState(false); // Track loading state
   const [error, setError] = React.useState(""); // Track errors
 
-  function fetchData(){
+  function fetchData(newlabel:string){
     setLoading(true);
     const endpoint = getEndPoint(dataType);
     axiosInstance
@@ -63,8 +66,19 @@ export function InsertDropdown({ dataType,dataLabel, onValueChange, value: paren
         if (Array.isArray(response.data)) {
           response.data.map((obj) => {
             if (dataType === "exptype" || dataType==="paytype") subitem.push({ value: obj.docno+"", label: obj.refname });
+            if (dataType === "clientmobile") subitem.push({ value: obj.docno+"", label: obj.mobile });
           });
           setFrameworks(subitem);
+
+          if(newlabel!=''){
+            const addedItem = subitem.find(
+              (item) => item.label.toLowerCase() === newlabel.toLowerCase()
+            );
+            if(addedItem){
+              handleSelect(addedItem.value, addedItem.label);
+            }
+            
+          }
         } else {
           setFrameworks([]);
         }
@@ -80,7 +94,7 @@ export function InsertDropdown({ dataType,dataLabel, onValueChange, value: paren
   }
   React.useEffect(() => {
     // This is the side effect, such as fetching data
-    fetchData();
+    fetchData("");
     // No JSX return, just side effects
     // Optionally return a cleanup function
     return () => {
@@ -95,12 +109,12 @@ export function InsertDropdown({ dataType,dataLabel, onValueChange, value: paren
     } 
   }, [parentValue]);
   
-  const handleSelect = (currentValue: string) => {
-    const newValue = currentValue === value ? "" : currentValue;
+  const handleSelect = (curvalue:string,label: string) => {
+    const newValue = label === value ? "" : label;
     setValue(newValue);
     if (field) field.onChange(newValue);
     setOpen(false);
-    onValueChange(dataType,newValue); // Pass the selected value to the parent
+    onValueChange(dataType,curvalue); // Pass the selected value to the parent
   };
 
   const handleAddItem = async () => {
@@ -118,13 +132,24 @@ export function InsertDropdown({ dataType,dataLabel, onValueChange, value: paren
     if (!alreadyExists) {
       try {
         setLoading(true);
-
-        sendAPIRequest({refname:newItem.label},"A","/"+dataType,dataLabel)
+        let apiEndPoint="";
+        let postdata=null;
+        if(dataType=="clientmobile"){
+          apiEndPoint="client";
+          postdata={mobile:newItem.label};
+        }
+        else{
+          postdata={refname:newItem.label};
+          apiEndPoint=dataType;
+        }
+        sendAPIRequest(postdata,"A","/"+apiEndPoint,dataLabel)
             .then(()=>{
               setFrameworks((prevFrameworks) => [...prevFrameworks, newItem]);
+              fetchData(newItem.label);
               setOpen(false);
               setSearchTerm("");
-                fetchData();
+              
+
             })
             .catch((error)=>{
                 console.log(error);
@@ -169,11 +194,12 @@ export function InsertDropdown({ dataType,dataLabel, onValueChange, value: paren
           <CommandList>
             <CommandEmpty>No {dataLabel} found.</CommandEmpty>
             <CommandGroup>
+              <ScrollArea className="h-auto w-full rounded-md border overflow-y-auto">
               {frameworks.map((framework) => (
                 <CommandItem
                   key={framework.value}
-                  value={framework.value}
-                  onSelect={handleSelect}
+                  value={framework.label}
+                  onSelect={()=>handleSelect(framework.value,framework.label)}
                 >
                   {framework.label}
                   <CheckIcon
@@ -184,6 +210,9 @@ export function InsertDropdown({ dataType,dataLabel, onValueChange, value: paren
                   />
                 </CommandItem>
               ))}
+              <ScrollBar orientation="vertical"></ScrollBar>
+              </ScrollArea>
+              
             </CommandGroup>
           </CommandList>
         </Command>
