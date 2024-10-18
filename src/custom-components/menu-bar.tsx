@@ -61,6 +61,7 @@ import { Link } from "react-router-dom"
             </MenubarItem>
           </MenubarContent>
         </MenubarMenu>
+        <MenubarMenu><MenubarTrigger><Link to={"BIReport"}>Dashboard</Link></MenubarTrigger></MenubarMenu>
       </Menubar>
       </div>
       </>

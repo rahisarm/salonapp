@@ -27,6 +27,8 @@ import { DatePicker } from "@/custom-components/datepicker";
 import { InsertDropdown } from "@/custom-components/InsertDropdown";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { ServiceDropdown } from "@/custom-components/ServiceDropdown";
+import { Switch } from "@/components/ui/switch";
+import { useSettings } from "@/contexts/SettingsContext";
 
 interface Service{
   docno: number;
@@ -57,6 +59,7 @@ interface TblStructure{
     date:Date;
 }
 
+
 const formSchema = z.object({
     cldocno: z.string().min(1, {
         message: "Customer Mobile is required.",
@@ -85,6 +88,8 @@ const formSchema = z.object({
     }),
     docno: z.number().optional(),
     service: z.string().optional(),
+    chkworkbonus:z.boolean().optional(),
+    chknightbonus:z.boolean().optional()
 });
 
 export function Invoice(){
@@ -98,7 +103,10 @@ export function Invoice(){
   const [isSubmitting,setIsSubmitting]=useState(false);
   const [selectedServices,setSelectedServices]=useState<Service[]>([]);
   const [expandedCombos, setExpandedCombos] = useState<number[]>([]);
-
+  const [empTargetPay,setEmpTargetPay]=useState(0.0);
+  const settings=useSettings();
+ 
+  
   // Toggle the visibility of combo details
   const toggleCombo = (docno: number) => {
     if (expandedCombos.includes(docno)) {
@@ -122,9 +130,12 @@ export function Invoice(){
         empid:"",
         date:new Date,
         paytype:"",
+        chkworkbonus:false,
+        chknightbonus:false
     },
   });
 
+  
   function onSubmit(values: z.infer<typeof formSchema>) {
     if(selectedServices.length==0){
       toast({
@@ -136,12 +147,14 @@ export function Invoice(){
     }
     let formdata={
         ...values,
-        servicelist: selectedServices.map((service) => ({
-            servicedocno:service.docno,
-            servicetype:service.servicetype
-        }))
+        details: selectedServices.map((service) => ({
+            serviceid:service.docno,
+            servicetype:service.servicetype,
+            amount:service.amount
+        })),
+        taxpercent:settings.tax.value
     }
-
+    console.log(formdata);
     let confirmmsg="";
     if(mode=="A"){
       confirmmsg="Are you sure you want to add this invoice?";
@@ -184,6 +197,7 @@ export function Invoice(){
 
   useEffect(()=>{
     fetchData();
+    
   },[]);
 
   function fetchProduct(psrno:string,itemtype:string){
@@ -209,7 +223,7 @@ export function Invoice(){
 
             // Update the total in the form
             form.setValue("total", totalAmount+"");
-
+            calculateNet();
             return updatedServices; // Return the updated services for state
         });
       }
@@ -220,7 +234,7 @@ export function Invoice(){
     });
   }
   function handleService(datatype:string,value:string,itemtype:string){
-    console.log("Inside Select"+datatype+"::"+value+"::"+itemtype);
+    /*console.log("Inside Select"+datatype+"::"+value+"::"+itemtype);
     const isSelected=selectedServices.some((service)=>(service.docno+"")==value && service.servicetype==itemtype);
     if(isSelected){
       toast({
@@ -230,10 +244,10 @@ export function Invoice(){
       });
       return false;
     }
-    else{
+    else{*/
       form.setValue("service", value);
       fetchProduct(value,itemtype);
-    }
+   // }
     
   }
 
@@ -252,10 +266,43 @@ export function Invoice(){
 
         form.setValue("total", totalAmount+""); // Update the form's total value
 
+        calculateNet();
         return updatedServices; // Return the updated service list
     });
   }
 
+  function calculateNet(){
+    var amount=form.getValues("total");
+    var discount=form.getValues("discount");
+    var tax=form.getValues("tax");
+
+    if(discount=="" || discount=="undefined" || discount==null){
+        discount="0.0";
+    }
+    if(amount=="" || amount=="undefined" || amount==null){
+        amount="0.0";
+    }
+    if(tax=="" || tax=="undefined" || tax==null){
+        tax="0.0";
+    }
+
+    if(settings.tax.method=="1"){
+        var taxable=(parseFloat(amount)-parseFloat(discount));
+        if(settings.tax.value!=null && settings.tax.value!="" && parseFloat(settings.tax.value)>0.0){
+            var taxvalue=parseFloat(settings.tax.value)/100;
+            var taxamt=(taxable*taxvalue).toFixed(2);
+            tax=taxamt+"";
+
+        }
+    }
+    console.log(empTargetPay+"::"+amount);
+    if(empTargetPay>0.0 && parseFloat(amount)>empTargetPay){
+        form.setValue("chkworkbonus",true)
+    }
+    var nettotal=(parseFloat(amount)-parseFloat(discount))+parseFloat(tax);
+    form.setValue("nettotal",nettotal+"");
+    form.setValue("tax",tax);
+  }
   const handleDelete = (row: TblStructure) => {
     setMode("D");
     
@@ -298,6 +345,21 @@ export function Invoice(){
 const toggleCollapse = (docno: number) => {
   setOpenRows(prev => ({ ...prev, [docno]: !prev[docno] }));
 };
+
+function changeDropdownData(field:any,value:string){
+    form.setValue(field,value);
+    console.log('inside dropdown'+field);
+    if(field=="empid"){
+        sendAPIRequest(null,"G","/employee/"+value,"Employee").then((response:any)=>{
+            if(response?.data){
+                console.log(response.data);
+                setEmpTargetPay(response.data.targetamt);    
+            }
+        }).catch((error)=>{
+            console.log(error);
+        });
+    }
+}
   return (
     <>
       <div className="w-full">
@@ -319,12 +381,13 @@ const toggleCollapse = (docno: number) => {
                             <Button variant="outline" onClick={()=>{setMode("A");form.reset();setSelectedServices([])}}>Add Invoices</Button>
                         </DialogTrigger>
                         <DialogContent className="sm:max-w-[800px] lg:max-w-[1000px] w-full">
+                            <ScrollArea className="overflow-y-auto max-h-svh">
                             <DialogHeader>
                                 <DialogTitle>{modaltitle}</DialogTitle>
                                 <DialogDescription>{modalDesc}</DialogDescription>
                             </DialogHeader>
-                            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8" autoComplete="off">
-                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 py-4">
+                            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-2" autoComplete="off">
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 py-2">
                                     <FormField control={form.control} name="date" render={({ field }) => (
                                         <FormItem >
                                             <FormLabel>Date</FormLabel>
@@ -346,16 +409,31 @@ const toggleCollapse = (docno: number) => {
                                             <FormMessage />
                                         </FormItem>
                                     )} />
-                                    <FormField control={form.control} name="paytype" render={({ field }) => (
-                                        <FormItem >
-                                            <FormLabel>Payment Type</FormLabel>
-                                            <FormControl>
-                                                <CustDropDown dataLabel="Payment Type" dataType="paytype" field={field} onValueChange={(type, value) => form.setValue("paytype", value)} value={field.value}></CustDropDown>
-                                            </FormControl>
-                                            <FormDescription>This is your payment type like Cash/Card/Cheque/UPI.</FormDescription>
-                                            <FormMessage />
-                                        </FormItem>
-                                    )} />
+                                    <div>
+                                        <div className="grid grid-cols-2 gap-2">
+                                            <FormField control={form.control} name="paytype" render={({ field }) => (
+                                                <FormItem >
+                                                    <FormLabel>Payment Type</FormLabel>
+                                                    <FormControl>
+                                                        <CustDropDown dataLabel="Payment Type" dataType="paytype" field={field} onValueChange={(type, value) => form.setValue("paytype", value)} value={field.value}></CustDropDown>
+                                                    </FormControl>
+                                                    <FormDescription>This is your payment type like Cash/Card/Cheque/UPI.</FormDescription>
+                                                    <FormMessage />
+                                                </FormItem>
+                                            )} />
+                                            <FormField control={form.control} name="empid" render={({ field }) => (
+                                                <FormItem >
+                                                    <FormLabel>Employee</FormLabel>
+                                                    <FormControl>
+                                                        <CustDropDown dataLabel="Employee" dataType="employee" field={field} onValueChange={(type, value) => changeDropdownData("empid",value)} value={field.value}></CustDropDown>
+                                                    </FormControl>
+                                                    <FormDescription>This is your employee.</FormDescription>
+                                                    <FormMessage />
+                                                </FormItem>
+                                            )} />
+                                        </div>
+                                    </div>
+                                    
                                     <FormField control={form.control} name="service" render={({ field }) => (
                                         <FormItem >
                                             <FormLabel>Services</FormLabel>
@@ -400,7 +478,7 @@ const toggleCollapse = (docno: number) => {
                                             <FormItem>
                                                 <FormLabel>Total</FormLabel>
                                                 <FormControl>
-                                                    <Input placeholder="Total" {...field} type="text" inputMode="decimal"/>
+                                                    <Input placeholder="Total" {...field} type="text" inputMode="decimal" readOnly/>
                                                 </FormControl>
                                                 <FormDescription>This is the total invoice amount.</FormDescription>
                                                 <FormMessage />
@@ -420,7 +498,7 @@ const toggleCollapse = (docno: number) => {
                                             <FormItem>
                                                 <FormLabel>Tax</FormLabel>
                                                 <FormControl>
-                                                    <Input placeholder="Tax" {...field} type="text" inputMode="decimal"/>
+                                                    <Input placeholder="Tax" {...field} type="text" inputMode="decimal" readOnly/>
                                                 </FormControl>
                                                 <FormDescription>This is your tax over invoice amount.</FormDescription>
                                                 <FormMessage />
@@ -441,7 +519,34 @@ const toggleCollapse = (docno: number) => {
                                     
                                     
                                 </div>
-
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                    <FormField control={form.control} name="chkworkbonus" render={({ field }) => (
+                                        <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+                                            <div className="space-y-0.5">
+                                                <FormLabel className="text-base">Daily Work Bonus</FormLabel>
+                                                <FormDescription>
+                                                    Daily Work bonus applied based on daily target pay
+                                                </FormDescription>
+                                            </div>
+                                            <FormControl>
+                                                <Switch checked={field.value} onCheckedChange={field.onChange}/>
+                                            </FormControl>
+                                        </FormItem>
+                                    )}/>
+                                    <FormField control={form.control} name="chknightbonus" render={({ field }) => (
+                                        <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+                                            <div className="space-y-0.5">
+                                                <FormLabel className="text-base">Night Work Bonus</FormLabel>
+                                                <FormDescription>
+                                                    Night Work bonus applied based on extra night time worked
+                                                </FormDescription>
+                                            </div>
+                                            <FormControl>
+                                                <Switch checked={field.value} onCheckedChange={field.onChange}/>
+                                            </FormControl>
+                                        </FormItem>
+                                    )}/>
+                                </div>
                                 <DialogFooter>
                                     <Button variant={'outline'} onClick={()=>{form.reset();setIsOpen(false);}}>Cancel</Button>
                                     <Button type="submit" disabled={isSubmitting}>
@@ -452,6 +557,9 @@ const toggleCollapse = (docno: number) => {
                                     </Button>
                                 </DialogFooter>
                             </form>
+                            <ScrollBar orientation="vertical"></ScrollBar>
+                            </ScrollArea>
+                            
                         </DialogContent>
                     </Dialog>
                 </Form>
@@ -476,7 +584,7 @@ const toggleCollapse = (docno: number) => {
                                     <TableCell>{invoice.clientmobile}</TableCell>
                                     <TableCell>
                                         <Button variant="outline" size="sm" onClick={() => toggleCombo(invoice.docno)}>
-                                            {invoice.servicelist.length} Services
+                                            {invoice.details.length} Services
                                         </Button>
                                     </TableCell>
                                     <TableCell>{invoice.paytypename}</TableCell>
