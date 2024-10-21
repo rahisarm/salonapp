@@ -2,8 +2,13 @@
 import React, { createContext, useContext, useEffect, useState } from "react";
 import { fetchSettings } from "@/services/fetchSettings";
 
+interface SettingsContextType {
+  settings: Record<string, { method: string; value: string }>;
+  formatAmount: (amount: string) => string;
+}
 // Create the settings context
-const SettingsContext = createContext<Record<string, { method: string; value: string }> | null>(null);
+//const SettingsContext = createContext<Record<string, { method: string; value: string }> | null>(null);
+const SettingsContext = createContext<SettingsContextType | null>(null);
 
 // Provide settings context
 export const SettingsProvider = ({ children }: { children: React.ReactNode }) => {
@@ -18,8 +23,20 @@ export const SettingsProvider = ({ children }: { children: React.ReactNode }) =>
     loadSettings();
   }, []);
 
+  const formatAmount = (amount: string) => {
+    const currency = 'INR'; // Default to USD if not set
+    const locale = 'en-IN'; // Default to en-US if not set
+
+    return new Intl.NumberFormat(locale, {
+      style: 'currency',
+      currency: currency,
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    }).format(parseFloat(amount));
+  };
+
   return (
-    <SettingsContext.Provider value={settings}>
+    <SettingsContext.Provider value={{settings,formatAmount}}>
       {children}
     </SettingsContext.Provider>
   );

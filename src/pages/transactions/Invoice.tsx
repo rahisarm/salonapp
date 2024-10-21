@@ -29,6 +29,7 @@ import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { ServiceDropdown } from "@/custom-components/ServiceDropdown";
 import { Switch } from "@/components/ui/switch";
 import { useSettings } from "@/contexts/SettingsContext";
+import { format } from "date-fns";
 
 interface Service{
   docno: number;
@@ -55,8 +56,11 @@ interface TblStructure{
     discount:string;
     nettotal:string; 
     servicelist:[];
+    details:[];
     service:string;
     date:Date;
+    chkworkbonus:boolean;
+    chknightbonus:boolean;
 }
 
 
@@ -104,8 +108,9 @@ export function Invoice(){
   const [selectedServices,setSelectedServices]=useState<Service[]>([]);
   const [expandedCombos, setExpandedCombos] = useState<number[]>([]);
   const [empTargetPay,setEmpTargetPay]=useState(0.0);
-  const settings=useSettings();
- 
+
+  const globalsettings=useSettings();
+
   
   // Toggle the visibility of combo details
   const toggleCombo = (docno: number) => {
@@ -152,7 +157,7 @@ export function Invoice(){
             servicetype:service.servicetype,
             amount:service.amount
         })),
-        taxpercent:settings.tax.value
+        taxpercent:globalsettings.settings.tax.value
     }
     console.log(formdata);
     let confirmmsg="";
@@ -184,7 +189,7 @@ export function Invoice(){
   function fetchData(){
     sendAPIRequest(null,"G","/invoice/all/"+localStorage.getItem("brhid"),"Invoice").then((response:any)=>{
       if(response?.data){
-        console.log('Fetching Combo');
+        console.log('Fetching Invoice');
         console.log(response.data);
         setTbldata(response.data);
       }
@@ -213,6 +218,8 @@ export function Invoice(){
       if(response?.data){
         console.log(response.data);
         setSelectedServices((prevServices) => {
+            console.log("Fetching Details");
+            console.log(response.data);
             // Assuming response.data is an array of the new service data
             const updatedServices = prevServices.concat(response.data);
 
@@ -286,10 +293,10 @@ export function Invoice(){
         tax="0.0";
     }
 
-    if(settings.tax.method=="1"){
+    if(globalsettings.settings.tax.method=="1"){
         var taxable=(parseFloat(amount)-parseFloat(discount));
-        if(settings.tax.value!=null && settings.tax.value!="" && parseFloat(settings.tax.value)>0.0){
-            var taxvalue=parseFloat(settings.tax.value)/100;
+        if(globalsettings.settings.tax.value!=null && globalsettings.settings.tax.value!="" && parseFloat(globalsettings.settings.tax.value)>0.0){
+            var taxvalue=parseFloat(globalsettings.settings.tax.value)/100;
             var taxamt=(taxable*taxvalue).toFixed(2);
             tax=taxamt+"";
 
@@ -321,18 +328,28 @@ export function Invoice(){
         });
   };
   const handleEdit = (user: TblStructure) => {
-    setModalTitle("Edit Combo");
+    console.log("Edit Function");
+    console.log(user);
+    setModalTitle("Edit Invoice");
     setModalDesc("Make changes to edit this combo.");
     setMode("E");
     form.setValue("docno", user.docno);
-    form.setValue("date", user.date);
-    form.setValue("cldocno", user.cldocno);
-    form.setValue("description", user.description);
-    form.setValue("total",user.total);
-    form.setValue("tax",user.tax);
-    form.setValue("discount",user.discount);
-    form.setValue("nettotal",user.nettotal);
-    setSelectedServices(user.servicelist);
+    form.setValue("date", new Date(user.date));
+    form.setValue("cldocno", user.cldocno+"");
+    form.setValue("description", user.description+"");
+    form.setValue("total",user.total+"");
+    form.setValue("tax",user.tax+"");
+    form.setValue("discount",user.discount+"");
+    form.setValue("nettotal",user.nettotal+"");
+    form.setValue("paytype",user.paytype+"");
+    form.setValue("empid",user.empid+"");
+    form.setValue("chkworkbonus",user.chkworkbonus);
+    form.setValue("chknightbonus",user.chknightbonus);
+    let services=new Array<any>();
+    user.details.map((item:any)=>{
+        services.push({amount:item.amount,docno:item.serviceid,refname:item.servicename,servicetype:item.servicetype});
+    });
+    setSelectedServices(services);
     setIsOpen(true);
   };
   const actions:{label:string,onClick:(row:TblStructure)=>void}[] = [
@@ -576,11 +593,11 @@ function changeDropdownData(field:any,value:string){
                         <TableHead>Action</TableHead>
                     </TableHeader>
                     <TableBody>
-                        {tbldata.map((invoice: any) => (
+                        {tbldata.map((invoice: TblStructure) => (
                             <React.Fragment key={invoice.docno}>
                                 <TableRow>
                                     <TableCell>{invoice.docno}</TableCell>
-                                    <TableCell>{invoice.date}</TableCell>
+                                    <TableCell>{format(invoice.date,'dd.MM.yyyy')}</TableCell>
                                     <TableCell>{invoice.clientmobile}</TableCell>
                                     <TableCell>
                                         <Button variant="outline" size="sm" onClick={() => toggleCombo(invoice.docno)}>
@@ -588,7 +605,7 @@ function changeDropdownData(field:any,value:string){
                                         </Button>
                                     </TableCell>
                                     <TableCell>{invoice.paytypename}</TableCell>
-                                    <TableCell>{invoice.amount}</TableCell>
+                                    <TableCell>{globalsettings.formatAmount(invoice.nettotal)}</TableCell>
                                     <TableCell>
                                         <DropdownMenu>
                                             <DropdownMenuTrigger asChild>
