@@ -24,7 +24,7 @@ const getAction = (mode: string) => {
         case "E":
             return axiosInstance.put(endpoint,data);
         case "D":
-            return axiosInstance.delete(endpoint+"/"+data.docno);
+            return axiosInstance.delete(endpoint+"/"+data.docno+"?userid="+localStorage.getItem("userdocno")+"&brhid="+localStorage.getItem("brhid"));
         case "G":
             return axiosInstance.get(endpoint)
         default:

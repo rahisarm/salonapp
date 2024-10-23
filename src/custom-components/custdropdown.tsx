@@ -129,10 +129,6 @@ export function CustDropDown({ dataType,dataLabel, onValueChange, value: parentV
     onValueChange(dataType,docno); // Pass the selected value to the parent
   };
 
-  // const filteredItems = items.filter(item =>
-  //   item.label.toLowerCase().includes(searchTerm.toLowerCase())
-  // );
-
   const handleReset = () => {
     setValue(""); // Reset internal state
     onValueChange(dataType,""); // Notify parent that the value has been reset
