@@ -14,14 +14,16 @@ import { useConfirm } from "@/custom-components/Confirm";
 import { DataTable } from "@/custom-components/DataTable";
 import { sendAPIRequest } from "@/services/common";
 import { Checkbox } from "@/components/ui/checkbox";
+import { useSettings } from "@/contexts/SettingsContext";
 
 interface TblStructure{
     docno:number;
     refname:string;
     email:string;
     mobile:string;
-    targetamt:number;
+    targetamt:string;
     active:boolean;
+    salary:string;
 }
 
 const formSchema = z.object({
@@ -31,12 +33,18 @@ const formSchema = z.object({
     mobile: z.string().optional(), // Optional fields
     email: z.string().optional(),
     docno: z.number().optional(),
-    targetamt: z.string()
+    targetamt: z.string().regex(/^\d+(\.\d+)?$/, {
+        message: "Target Amount must be a valid number.",
+    }),
+    /*targetamt: z.string()
         .min(1, { message: "Target amount is required." })
         .transform((value) => parseFloat(value)) // Transform to number
         .refine((value) => !isNaN(value), { message: "Invalid number." }), // Ensure it's a valid number
-
-    active:z.boolean().optional()
+    */
+    active:z.boolean().optional(),
+    salary: z.string().regex(/^\d+(\.\d+)?$/, {
+        message: "Salary must be a valid number.",
+    }),
 });
 
 const tblcolumns = [
@@ -63,6 +71,7 @@ export function EmployeeMaster(){
     const [mode,setMode]=useState("");
     const { showConfirm }=useConfirm();
 
+    const globalsettings=useSettings();
     const form = useForm<z.infer<typeof formSchema>>({
         resolver: zodResolver(formSchema),
         defaultValues: {
@@ -70,8 +79,9 @@ export function EmployeeMaster(){
             refname: "",
             mobile: "",
             email: "",
-            targetamt:0.0,
-            active:true
+            targetamt:"0.0",
+            active:true,
+            salary:globalsettings.settings.DefaultSalary.value
         },
     });
 
@@ -103,8 +113,9 @@ export function EmployeeMaster(){
         form.setValue("refname", user.refname);
         form.setValue("email", user.email);
         form.setValue("mobile", user.mobile);
-        form.setValue("targetamt", user.targetamt);
+        form.setValue("targetamt", user.targetamt+"");
         form.setValue("active", user.active);
+        form.setValue("salary",user.salary+"");
         setIsOpen(true);
         // Implement edit functionality
     };
@@ -217,6 +228,16 @@ export function EmployeeMaster(){
                                             <Input placeholder="Email" {...field} />
                                             </FormControl>
                                             <FormDescription>This is your employee Email ID.</FormDescription>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )} />
+                                    <FormField control={form.control} name="salary" render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>Salary</FormLabel>
+                                            <FormControl>
+                                            <Input placeholder="Salary" {...field} />
+                                            </FormControl>
+                                            <FormDescription>This is your employee salary.</FormDescription>
                                             <FormMessage />
                                         </FormItem>
                                     )} />

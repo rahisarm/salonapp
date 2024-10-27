@@ -63,7 +63,7 @@ export function AccountMaster(){
     });
 
     const fetchData=()=>{
-        sendAPIRequest(null,"G","/account/all/"+localStorage.getItem("brhid"),"Account").then((response:any)=>{
+        sendAPIRequest(null,"G","/account/gl/"+localStorage.getItem("brhid"),"Account").then((response:any)=>{
             if(response?.data){
                 setTbldata(response.data);
             }
@@ -173,7 +173,7 @@ export function AccountMaster(){
                             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8" autoComplete="off">
                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 py-4">
                                     <FormField control={form.control} name="actype" render={({ field }) => (
-                                        <FormItem>
+                                        <FormItem className="">
                                             <FormLabel>Account Type</FormLabel>
                                             <FormControl>
                                                 <CustDropDown dataLabel="Account Type" dataType="actype" field={field} onValueChange={(type, value) => form.setValue("actype", value)} value={field.value}></CustDropDown>

@@ -17,7 +17,6 @@ const getAction = (mode: string) => {
   };
 
   const getMapping = (data:any,mode: string,endpoint:string) => {
-    console.log("Mode:"+mode);
     switch(mode){
         case "A":
             return axiosInstance.post(endpoint,data);
@@ -35,7 +34,6 @@ const getAction = (mode: string) => {
 export function sendAPIRequest(data:any,mode:string,endpoint:string,label:string):Promise<any>{
     const action=getAction(mode);
     data={...data,"userid":localStorage.getItem("userdocno"),"brhid":localStorage.getItem("brhid")};
-    console.log(data);
     let axioscall=getMapping(data,mode,endpoint);
 
     return new Promise((resolve,reject)=>{

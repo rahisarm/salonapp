@@ -1,3 +1,4 @@
+
 "use client"
 
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
@@ -25,14 +26,10 @@ import React from "react";
 import { toast } from "@/hooks/use-toast";
 
 interface Product{
-  docno: number;
-  refname: string;
-  amount: number;
-  status: number;
-  userid: number;
-  brhid: number;
-  date: string;
-  vocno: number;
+  amount:number;
+  psrno:number;
+  rdocno?:number;
+  refname:string;
 }
 interface TblStructure{
   docno:number;
@@ -100,7 +97,7 @@ export function ComboMaster(){
     let formdata={
       ...values,
       comboDetailList: selectedServices.map((service) => ({
-        psrno: service.docno
+        psrno: service.psrno
       }))
     }
 
@@ -153,7 +150,11 @@ export function ComboMaster(){
       if(response?.data){
         console.log('Fetching Product');
         console.log(response.data);
-        setSelectedServices(selectedServices.concat(response.data));
+        let existdata=selectedServices;
+        let item=response.data;
+        existdata.push({psrno:item.psrno,refname:item.refname,amount:item.amount});
+        setSelectedServices(existdata);
+        console.log(selectedServices);
       }
     }).catch((error)=>{
         console.log(error);
@@ -163,7 +164,7 @@ export function ComboMaster(){
   }
   function handleService(type:string,value:string){
     
-    const isSelected=selectedServices.some((service)=>(service.docno+"")===value);
+    /*const isSelected=selectedServices.some((service)=>(service.pr+"")===value);
     if(isSelected){
       toast({
         title: "Duplicate Service",
@@ -172,17 +173,17 @@ export function ComboMaster(){
       });
       return false;
     }
-    else{
+    else{*/
       form.setValue("service", value);
       fetchProduct(value);
-    }
+    /*}*/
     
   }
 
   function removeService(docno:number){
     setSelectedServices((prevServices) => {
       // Filter out the service with the matching docno
-      return prevServices.filter((service) => service.docno !== docno);
+      return prevServices.filter((service) => service.psrno != docno);
     });
   }
 
@@ -313,11 +314,11 @@ const toggleCollapse = (docno: number) => {
                                       </TableHeader>
                                       <TableBody>
                                         {selectedServices.map((product:Product) => (
-                                          <TableRow key={product.docno}>
+                                          <TableRow key={product.psrno}>
                                             <TableCell>{product.refname}</TableCell>
                                             <TableCell>{product.amount}</TableCell>
                                             <TableCell className="text-right">
-                                              <Button variant={'destructive'} size={'icon'} type="button" onClick={() => removeService(product.docno)}>
+                                              <Button variant={'destructive'} size={'icon'} type="button" onClick={() => removeService(product.psrno)}>
                                                 <TrashIcon></TrashIcon>
                                               </Button>
                                             </TableCell>

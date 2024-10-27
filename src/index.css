@@ -98,6 +98,11 @@ button:focus-visible {
     --chart-3: 197 37% 24%;
     --chart-4: 43 74% 66%;
     --chart-5: 27 87% 67%;
+    --chart-6: 270 50% 40%; /*(Vibrant Purple)*/
+    --chart-7: 180 100% 40%; /*(Bright Teal)*/
+    --chart-8: 30 100% 50%; /*(Sunset Orange)*/
+    --chart-9: 15 100% 65%; /*(Coral Pink)*/
+    --chart-10: 240 100% 90%; /*(Soft Lavender)*/
     --radius: 0.5rem;
   }
   .dark {
@@ -125,6 +130,11 @@ button:focus-visible {
     --chart-3: 30 80% 55%;
     --chart-4: 280 65% 60%;
     --chart-5: 340 75% 55%;
+    --chart-6: 240 80% 45%; /*(Cool Blue)*/
+    --chart-7: 140 70% 45%; /*(Emerald Green)*/
+    --chart-8: 40 100% 50%; /*(Rich Orange)*/
+    --chart-9: 300 100% 50%; /*(Magenta)*/
+    --chart-10: 50 100% 50%; /*(Golden Yellow)*/
   }
 }
 
