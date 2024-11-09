@@ -1,6 +1,7 @@
-import { CustDropDown } from "@/custom-components/custdropdown";
+
 import { CustMenuBar } from "@/custom-components/menu-bar";
 import { ModeToggle } from "@/custom-components/mode-toggle";
+import { NormalDropdown } from "@/custom-components/NormalDropdown";
 import { UserNav } from "@/custom-components/usernav";
 import { Outlet } from "react-router-dom";
 
@@ -19,11 +20,11 @@ export function Dashboard(){
         </nav> */}
 
 
-        <nav className="flex-col md:flex  fixed top-0 left-0 right-0 z-50">
+        <nav className="flex-col md:flex  fixed top-0 left-0 right-0 z-50 bg-background">
           <div className="border-b">
             <div className="flex h-16 items-center px-4">
               <div className="flex items-center justify-between">
-              <CustDropDown dataLabel="Branch" dataType="brhid" onValueChange={handleValueChange}></CustDropDown>
+              <NormalDropdown dataLabel="Branch" dataType="brhid" onValueChange={handleValueChange}></NormalDropdown>
               <CustMenuBar className="mx-6"></CustMenuBar>
               </div>
               
@@ -36,7 +37,7 @@ export function Dashboard(){
           </div>
         </nav>
         <main>
-          <div className="mx-auto  px-4 py-6 pt-20 sm:px-6 lg:px-8">
+          <div className="mx-auto px-4 py-6 pt-20 sm:px-6 lg:px-8 pb-20">
             <Outlet></Outlet>
           </div>
         </main>

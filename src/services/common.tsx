@@ -33,7 +33,9 @@ const getAction = (mode: string) => {
   };
 export function sendAPIRequest(data:any,mode:string,endpoint:string,label:string):Promise<any>{
     const action=getAction(mode);
-    data={...data,"userid":localStorage.getItem("userdocno"),"brhid":localStorage.getItem("brhid")};
+    if(endpoint!="/config"){
+        data={...data,"userid":localStorage.getItem("userdocno"),"brhid":localStorage.getItem("brhid")};
+    }
     let axioscall=getMapping(data,mode,endpoint);
 
     return new Promise((resolve,reject)=>{

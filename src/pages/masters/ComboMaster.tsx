@@ -100,7 +100,8 @@ export function ComboMaster(){
         psrno: service.psrno
       }))
     }
-
+    console.log('Before Submit');
+    console.log(formdata);
     let confirmmsg="";
     if(mode=="A"){
       confirmmsg="Are you sure you want to add this combo?";
@@ -145,15 +146,18 @@ export function ComboMaster(){
     fetchData();
   },[]);
 
-  function fetchProduct(psrno:string){
-    sendAPIRequest(null,"G","/product/"+psrno,"Service").then((response:any)=>{
+  function fetchProduct(productdocno:string){
+    sendAPIRequest(null,"G","/product/"+productdocno,"Service").then((response:any)=>{
       if(response?.data){
         console.log('Fetching Product');
         console.log(response.data);
-        let existdata=selectedServices;
         let item=response.data;
-        existdata.push({psrno:item.psrno,refname:item.refname,amount:item.amount});
-        setSelectedServices(existdata);
+        setSelectedServices(prevServices => [
+            ...prevServices,
+            { psrno: item.docno, refname: item.refname, amount: item.amount }
+          ]);
+        //existdata.push({psrno:item.docno,refname:item.refname,amount:item.amount});
+        //setSelectedServices(existdata);
         console.log(selectedServices);
       }
     }).catch((error)=>{
@@ -212,7 +216,14 @@ export function ComboMaster(){
     form.setValue("refname", user.refname);
     form.setValue("amount", user.amount);
     form.setValue("description", user.description);
-    setSelectedServices(user.comboDetailList);
+    console.log('Existing Combo Data');
+    console.log(user.comboDetailList);
+    let existdata=new Array<Product>();
+    user.comboDetailList.map((item:any)=>{
+      existdata.push({psrno:item.psrno,amount:item.amount,refname:item.refname});
+    });
+
+    setSelectedServices(existdata);
     
     setIsOpen(true);
   };

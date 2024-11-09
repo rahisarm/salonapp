@@ -13,6 +13,7 @@ import { Expense } from "@/pages/transactions/Expense";
 import { VendorMaster } from "@/pages/masters/VendorMaster";
 import { Invoice } from "@/pages/transactions/Invoice";
 import { BIReport } from "@/pages/reports/bireports";
+import { Settings } from "@/pages/masters/Settings";
 
 const AppRoutes: React.FC=()=>{
     return (
@@ -29,6 +30,7 @@ const AppRoutes: React.FC=()=>{
                 <Route path="expense" element={<ProtectedRoute element={<Expense></Expense>}></ProtectedRoute>}></Route>
                 <Route path="invoice" element={<ProtectedRoute element={<Invoice></Invoice>}></ProtectedRoute>}></Route>
                 <Route path="bireport" element={<ProtectedRoute element={<BIReport></BIReport>}></ProtectedRoute>}></Route>
+                <Route path="settings" element={<ProtectedRoute element={<Settings></Settings>}></ProtectedRoute>}></Route>
             </Route>
             
             <Route path='/' element={<Navigate to="/login"></Navigate>}></Route>

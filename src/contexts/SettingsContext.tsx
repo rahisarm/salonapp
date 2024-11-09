@@ -5,6 +5,7 @@ import { fetchSettings } from "@/services/fetchSettings";
 interface SettingsContextType {
   settings: Record<string, { method: string; value: string }>;
   formatAmount: (amount: string) => string;
+  reloadSettings: () => Promise<void>;
 }
 // Create the settings context
 //const SettingsContext = createContext<Record<string, { method: string; value: string }> | null>(null);
@@ -14,14 +15,17 @@ const SettingsContext = createContext<SettingsContextType | null>(null);
 export const SettingsProvider = ({ children }: { children: React.ReactNode }) => {
   const [settings, setSettings] = useState<Record<string, { method: string; value: string }>>({});
 
+  const loadSettings = async () => {
+    const fetchedSettings = await fetchSettings();
+    setSettings(fetchedSettings);
+  };
   useEffect(() => {
-    const loadSettings = async () => {
-      const fetchedSettings = await fetchSettings();
-      setSettings(fetchedSettings);
-    };
-
     loadSettings();
   }, []);
+
+  const reloadSettings = async () => {
+    await loadSettings();
+  };
 
   const formatAmount = (amount: string) => {
     const currency = 'INR'; // Default to USD if not set
@@ -36,7 +40,7 @@ export const SettingsProvider = ({ children }: { children: React.ReactNode }) =>
   };
 
   return (
-    <SettingsContext.Provider value={{settings,formatAmount}}>
+    <SettingsContext.Provider value={{settings,formatAmount,reloadSettings}}>
       {children}
     </SettingsContext.Provider>
   );

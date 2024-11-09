@@ -1,7 +1,7 @@
 "use client"
 
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { useForm } from "react-hook-form";
+import { Field, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod"
 import { z } from "zod"
 import { Input } from "@/components/ui/input";
@@ -60,7 +60,9 @@ const formSchema = z.object({
     billno: z.string().optional(),
     vendor: z.string().optional(),
     remarks: z.string().optional(),
-    tax: z.string().regex(/^\d+(\.\d+)?$/).optional(),
+    tax: z.string().regex(/^\d+(\.\d+)?$/, {
+        message: "Tax must be a valid number.",
+    }),
     docno: z.number().optional(),
 });
 
@@ -121,12 +123,13 @@ export function Expense(){
         },
     });
 
-    const amount=form.watch('amount');
+    /*const amount=form.watch('amount');
     const tax=form.watch('tax');
 
     useEffect(() => {
         
     }, [amount, tax, form]);
+    */
 
     const fetchData=()=>{
         sendAPIRequest(null,"G","/expense/all/"+localStorage.getItem("brhid"),"Expense").then((response:any)=>{
@@ -219,8 +222,27 @@ export function Expense(){
                 setIsSubmitting(false);
             });
         });
-      }
+    }
 
+    const calculateAmount=()=>{
+        const amountValue = parseFloat(form.getValues("amount")) || 0;
+        const taxValue = parseFloat(form.getValues("tax")) || 0;
+
+        const netTotal = amountValue + taxValue;
+        form.setValue("nettotal",netTotal.toFixed(2));
+
+    }
+
+    const formatAmt=(field:string)=>{
+        if(field=="amount"){
+            const amountValue = parseFloat(form.getValues("amount")) || 0;
+            form.setValue("amount",amountValue.toFixed(2));
+        }
+        else if(field=="tax"){
+            const taxValue = parseFloat(form.getValues("tax")) || 0;
+            form.setValue("tax",taxValue.toFixed(2));
+        }
+    }
 
     return(
         <>
@@ -312,7 +334,7 @@ export function Expense(){
                                         <FormItem >
                                             <FormLabel>Amount</FormLabel>
                                             <FormControl>
-                                            <Input placeholder="Amount" {...field} />
+                                            <Input placeholder="Amount" {...field}  onChange={(e)=>{field.onChange(e);calculateAmount();}} onBlur={()=>{formatAmt(field.name)}}/>
                                             </FormControl>
                                             <FormDescription>This is your expense amount.</FormDescription>
                                             <FormMessage />
@@ -322,7 +344,7 @@ export function Expense(){
                                         <FormItem >
                                             <FormLabel>Tax Amount</FormLabel>
                                             <FormControl>
-                                            <Input placeholder="Tax Amount" {...field}/>
+                                            <Input placeholder="Tax Amount" {...field} onChange={(e)=>{field.onChange(e);calculateAmount();}} onBlur={()=>{formatAmt(field.name)}}/>
                                             </FormControl>
                                             <FormDescription>This is your tax amount you paid to vendor.</FormDescription>
                                             <FormMessage />
@@ -332,7 +354,7 @@ export function Expense(){
                                         <FormItem >
                                             <FormLabel>Total Amount</FormLabel>
                                             <FormControl>
-                                            <Input placeholder="Net Total" {...field} />
+                                            <Input placeholder="Net Total" {...field} readOnly/>
                                             </FormControl>
                                             <FormDescription>This is your total amount you paid</FormDescription>
                                             <FormMessage />

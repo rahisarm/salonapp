@@ -3,6 +3,8 @@ import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"; // Assuming you have a Dropdown component
 import { DotsHorizontalIcon } from "@radix-ui/react-icons";
 import { format } from "date-fns";
+import { Input } from "@/components/ui/input";
+import { useEffect, useState } from "react";
 
 interface Column {
   key: string;
@@ -22,7 +24,36 @@ interface DataTableProps<T> {
 }
 
 export function DataTable<T extends Record<string, any>>({ columns, data, actions, hiddenColumns = [] }: DataTableProps<T>) {
+  const [filterText, setFilterText] = useState("");
+  const [filteredData, setFilteredData] = useState(data);
+
+  // Filter data whenever filterText or data changes
+  useEffect(() => {
+    if (filterText === "") {
+      setFilteredData(data); // Show all data if filter text is empty
+    } else {
+      setFilteredData(
+        data.filter((row) =>
+          // Check if any value in the row includes the filterText
+          Object.values(row).some((value) =>
+            value?.toString().toLowerCase().includes(filterText.toLowerCase())
+          )
+        )
+      );
+    }
+  }, [filterText, data]);
+
+  const handleFilterChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setFilterText(e.target.value);
+  };
   return (
+    <>
+    <Input
+        placeholder="Type in to search data"
+        value={filterText}
+        onChange={handleFilterChange}
+        style={{ marginBottom: "10px", padding: "5px" }}
+      />
     <Table>
       <TableHeader>
         <TableRow>
@@ -35,7 +66,7 @@ export function DataTable<T extends Record<string, any>>({ columns, data, action
         </TableRow>
       </TableHeader>
       <TableBody>
-        {data.map((row, index) => (
+        {filteredData.map((row, index) => (
           <TableRow key={index}>
             {columns.map((column) => (
               !hiddenColumns.includes(column.key) && (
@@ -66,5 +97,6 @@ export function DataTable<T extends Record<string, any>>({ columns, data, action
         ))}
       </TableBody>
     </Table>
+    </>
   );
 }

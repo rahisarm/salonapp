@@ -1,7 +1,7 @@
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { ChartConfig } from "@/components/ui/chart";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useSettings } from "@/contexts/SettingsContext";
 import { CustDropDown } from "@/custom-components/custdropdown";
@@ -10,6 +10,7 @@ import { DatePicker } from "@/custom-components/datepicker";
 import { DateRangePicker } from "@/custom-components/DateRangePicker";
 import { Icons } from "@/custom-components/icons";
 import MultiBarChart from "@/custom-components/MultiBarChart";
+import { NormalDropdown } from "@/custom-components/NormalDropdown";
 import StatsCard from "@/custom-components/StatsCard";
 import ValueCard from "@/custom-components/ValueCard";
 import { sendAPIRequest } from "@/services/common";
@@ -17,6 +18,14 @@ import { HandCoinsIcon, UserPlus, UsersRound, Wallet } from "lucide-react";
 import { useEffect, useState } from "react";
 import { DateRange } from "react-day-picker";
 
+interface PayrollProps{
+    empdocno:number;
+    empname:string;
+    salary:number;
+    nightbonus:number;
+    workbonus:number;
+    totalsalary:number;
+}
 interface PieChartData{
     refname:string;
     chartvalue:number;
@@ -35,15 +44,35 @@ export function BIReport(){
     const [selectedDateRange,setSelectedDateRange]=useState<DateRange | undefined>();
     const [reportBrhid,setReportBrhid]=useState<string>("");
     const [isSubmitting,setIsSubmitting]=useState<boolean>(false);
-    const [dailyCounterDate,setDailyCounterDate]=useState<Date | undefined>(undefined);
+    const [dailyCounterDate,setDailyCounterDate]=useState<Date | undefined>(new Date);
+    const [payrolldate,setPayrolldate]=useState<Date | undefined>(new Date);
     const [totalInvoice, setTotalInvoice] = useState<number>(0);  // Revenue
     const [totalExpense, setTotalExpense] = useState<number>(0);  // Expense
     const [newCustomers, setNewCustomers] = useState<number>(0);  // New Customers
     const [activeEmployees, setActiveEmployees] = useState<number>(0);  // Active Employees
     const [multiChartData,setMultiChartData]=useState<Array<{ [key: string]: number | string }>>([]);
     const [pieChartData,setPieChartData]=useState<PieChartData[]>([]);
+    const [payrollData,setPayrollData]=useState<PayrollProps[]>([]);
     const [pieChartConfig,setPieChartConfig]=useState<PieChartConfig>({});
     const globalsettings=useSettings();
+    const [dateRangeNames,setDateRangeNames]=useState({
+        from:"",
+        to:""
+    });
+    const [dailyData, setDailyData] = useState({
+        dailyinvcash: 0.0,
+        dailyinvcard: 0.0,
+        dailyinvcredit: 0.0,
+        dailyinvtotal: 0.0,
+        dailyexpcash: 0.0,
+        dailyexpcard: 0.0,
+        dailyexpcredit: 0.0,
+        dailyexptotal: 0.0,
+    });
+
+    
+    
+
     /*const multiChartData = [
         { month: "January", income: 186, expense: 80 },
         { month: "February", income: 305, expense: 200 },
@@ -53,8 +82,6 @@ export function BIReport(){
         { month: "June", income: 214, expense: 140 },
     ];
     */
-    let dailyinvcash=0.0,dailyinvcard=0.0,dailyinvcredit=0.0,dailyinvtotal=0.0;
-    let dailyexpcash=0.0,dailyexpcard=0.0,dailyexpcredit=0.0,dailyexptotal=0.0;
     const multiChartConfig = {
         income: {
           label: "Income",
@@ -96,7 +123,7 @@ export function BIReport(){
             });
             setPieChartData([]);
             let temppiechartdata=new Array<PieChartData>();
-            response.data.expTypeChart.map((item:any,index:number)=>{
+            response.data.expTypeChart.map((item:any)=>{
                 temppiechartdata.push({refname:item.refname,chartvalue:item.chartvalue,fill:"var(--color-"+item.refname.toLowerCase().replace(" ","_")});
             });
             setPieChartData(temppiechartdata);
@@ -106,7 +133,7 @@ export function BIReport(){
 
             console.log(multiChartData);
         }).catch((e)=>{
-
+            console.log(e);
         }).finally(()=>{
             setIsSubmitting(false);
         })
@@ -126,9 +153,30 @@ export function BIReport(){
     };
 
     function getDailyCounterData(){
-        sendAPIRequest({dailydate:dailyCounterDate},"A","/dashboard/DailyCounter","Daily Counter").then((response)=>{
+        const data={dailydate:dailyCounterDate};
+        sendAPIRequest(data,"A","/dashboard/DailyCounter","Daily Counter").then((response)=>{
+            setDailyData({
+                dailyinvcash: response.data.dailyinvcash || 0.0,
+                dailyinvcard: response.data.dailyinvcard || 0.0,
+                dailyinvcredit: response.data.dailyinvcredit || 0.0,
+                dailyinvtotal: response.data.dailyinvtotal || 0.0,
+                dailyexpcash: response.data.dailyexpcash || 0.0,
+                dailyexpcard: response.data.dailyexpcard || 0.0,
+                dailyexpcredit: response.data.dailyexpcredit || 0.0,
+                dailyexptotal: response.data.dailyexptotal || 0.0,
+            });
+        }).catch((error)=>{
+            console.error(error);
+        }).finally(()=>{
+            
+        });
+    }
+
+    function getPayrollData(){
+        const data={payrolldate:payrolldate};
+        sendAPIRequest(data,"A","/dashboard/PayrollProcess","Payroll Process").then((response)=>{
             if(response.data){
-                console.log(response.data);
+                setPayrollData(response.data.payrollList);
             }
         }).catch((error)=>{
             console.error(error);
@@ -139,12 +187,18 @@ export function BIReport(){
 
     useEffect(()=>{
         if(selectedDateRange){
+            const fromMonth = new Intl.DateTimeFormat('en-IN', { month: 'short' }).format(selectedDateRange.from);
+            const fromYear = (selectedDateRange.from || new Date()).getFullYear();
+            const toMonth = new Intl.DateTimeFormat('en-IN', { month: 'short' }).format(selectedDateRange.to);
+            const toYear = (selectedDateRange.to || new Date()).getFullYear();
+            setDateRangeNames({
+                from:fromMonth+" "+fromYear,
+                to:toMonth+" "+toYear
+            });
+
             loadDashboard();
         }
-        if(dailyCounterDate){
-            getDailyCounterData();
-        }
-    },[selectedDateRange,reportBrhid,dailyCounterDate]);
+    },[selectedDateRange,reportBrhid]);
 
     useEffect(()=>{
         if(dailyCounterDate){
@@ -152,11 +206,17 @@ export function BIReport(){
         }
     },[dailyCounterDate]);
 
+    useEffect(()=>{
+        if(payrolldate){
+            getPayrollData();
+        }
+    },[payrolldate]);
+
     
     
     return (
         <main className="flex flex-1 flex-col gap-4 p-4 md:gap-8 md-p-8">
-            <div className="grid grid-cols-5 grid-rows-1 gap-4">
+            <div className="grid grid-cols-3 grid-rows-1 gap-4">
                 <div className="col-start-5 row-start-1">
                     <Button type="button" disabled={isSubmitting} onClick={loadDashboard}>
                         {isSubmitting && <Icons.spinner className="mr-2 h-4 w-4 animate-spin" />}
@@ -164,10 +224,9 @@ export function BIReport(){
                     </Button>
                 </div>
                 <div className="col-start-4 row-start-1">
-                    <CustDropDown dataLabel="Branch" dataType="brhid" onValueChange={handleDropDown}></CustDropDown>
+                    <NormalDropdown dataLabel="Branch" dataType="brhid" onValueChange={handleDropDown}></NormalDropdown>
                 </div>
                 <div className="col-start-3 row-start-1"><DateRangePicker onDateChange={handleDateRange}></DateRangePicker></div>
-                
             </div>
             
             
@@ -177,8 +236,8 @@ export function BIReport(){
                 <StatsCard label="New Customers" icon={UserPlus} value={newCustomers}></StatsCard>
                 <StatsCard label="Active Employees" icon={UsersRound} value={activeEmployees}></StatsCard>
             </div>
-            <div className="grid grid-cols-4 grid-rows-5 gap-4">
-                <div className="col-span-2 row-span-5"><MultiBarChart chartConfig={multiChartConfig} chartData={multiChartData} description="Income/Expense" title="Last 6 months Financials"></MultiBarChart></div>
+            <div className="grid grid-rows-1 gap-4 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-4">
+                <div className="col-span-2 row-span-5"><MultiBarChart chartConfig={multiChartConfig} chartData={multiChartData} description="Income/Expense" title={"Financials of "+dateRangeNames.from+" to "+dateRangeNames.to}></MultiBarChart></div>
                 <div className="">
                     <Card>
                         <CardHeader className="border-b p-4">
@@ -187,41 +246,71 @@ export function BIReport(){
                                 <div className="sm:pt-3"><DatePicker value={dailyCounterDate} onChange={setDailyCounterDate}></DatePicker></div>
                             </div>
                         </CardHeader>
-                        <Tabs defaultValue="dailyinv" className="w-auto">
-                            <TabsList>
+                        <Tabs defaultValue="dailyinv" className="ps-2 pe-2 pt-2 w-full text-center">
+                            <TabsList className="w-auto" >
                                 <TabsTrigger value="dailyinv">Invoice</TabsTrigger>
                                 <TabsTrigger value="dailyexp">Expense</TabsTrigger>
                             </TabsList>
-                            <TabsContent value="dailyinv">
-                                <CardContent className="p-3 pt-3 pb-3">
-                                    <ValueCard label="Cash" value={dailyinvcash} ></ValueCard>
-                                    <ValueCard label="Card/UPI" value={dailyinvcard}></ValueCard>
-                                    <ValueCard label="Credit" value={dailyinvcredit}></ValueCard>        
+                            <TabsContent value="dailyinv" >
+                                <CardContent className="p-3 pt-3 pb-3 text-start">
+                                    <ValueCard label="Cash" value={dailyData.dailyinvcash} ></ValueCard>
+                                    <ValueCard label="Card/UPI" value={dailyData.dailyinvcard}></ValueCard>
+                                    <ValueCard label="Credit" value={dailyData.dailyinvcredit}></ValueCard>        
                                 </CardContent>
                                 <CardFooter className="justify-end border-t p-2">
-                                    <p className=" pe-5">{globalsettings.formatAmount(dailyinvtotal+"")}</p>
+                                    <p className=" pe-5">{globalsettings.formatAmount(dailyData.dailyinvtotal+"")}</p>
                                 </CardFooter>
                             </TabsContent>
                             <TabsContent value="dailyexp">
-                                <CardContent className="p-3 pt-3 pb-3">
-                                    <ValueCard label="Cash" value={dailyexpcash} ></ValueCard>
-                                    <ValueCard label="Card/UPI" value={dailyexpcard}></ValueCard>
-                                    <ValueCard label="Credit" value={dailyexpcredit}></ValueCard>        
+                                <CardContent className="p-3 pt-3 pb-3 text-start">
+                                    <ValueCard label="Cash" value={dailyData.dailyexpcash} ></ValueCard>
+                                    <ValueCard label="Card/UPI" value={dailyData.dailyexpcard}></ValueCard>
+                                    <ValueCard label="Credit" value={dailyData.dailyexpcredit}></ValueCard>        
                                 </CardContent>
                                 <CardFooter className="justify-end border-t p-2">
-                                    <p className=" pe-5">{globalsettings.formatAmount(dailyexptotal+"")}</p>
+                                    <p className=" pe-5">{globalsettings.formatAmount(dailyData.dailyexptotal+"")}</p>
                                 </CardFooter>
                             </TabsContent>
                         </Tabs>
                         
                     </Card>
                 </div>
-                <div className="row-span-5">
-                    <CustomPieChart data={pieChartData} chartconfig={pieChartConfig} description="Expense" totalLabel="Expense" title="Expense from Last Month"></CustomPieChart></div>
+                <div className="col-span-2 md:col-span-1 lg:col-span-1">
+                    <CustomPieChart data={pieChartData} chartconfig={pieChartConfig} description="Expense" totalLabel="Expense" title={"Expenses from "+dateRangeNames.from+" to "+dateRangeNames.to}></CustomPieChart></div>
                 </div>
-            <div className="grid grid-cols-4 gap-2">
-                
-            </div>
+                <div className="col-span-2 md:col-span-1 lg:col-span-1">
+                    <Card>
+                        <CardHeader className="pb-2">
+                            <div className="flex align-middle justify-between">
+                                <p>Salary Processing</p>
+                                <div className="max[200-px]"><DatePicker value={payrolldate} onChange={setPayrolldate}></DatePicker></div>
+                            </div> 
+                        </CardHeader>
+                        <CardContent>
+                            <Table className="rounded">
+                                <TableHeader>
+                                    <TableHead>Employee</TableHead>
+                                    <TableHead>Base Salary</TableHead>
+                                    <TableHead>Extra Bonus</TableHead>
+                                    <TableHead>Night Bonus</TableHead>
+                                    <TableHead>Total</TableHead>
+                                </TableHeader>
+                                <TableBody className="border-t-2">
+                                    {payrollData.map((row)=>(
+                                        <TableRow key={row.empdocno}>
+                                            <TableCell>{row.empname}</TableCell>
+                                            <TableCell>{globalsettings.formatAmount(row.salary+"")}</TableCell>
+                                            <TableCell>{globalsettings.formatAmount(row.workbonus+"")}</TableCell>
+                                            <TableCell>{globalsettings.formatAmount(row.nightbonus+"")}</TableCell>
+                                            <TableCell>{globalsettings.formatAmount(row.totalsalary+"")}</TableCell>
+                                        </TableRow>
+                                    ))}
+                                    
+                                </TableBody>
+                            </Table>
+                        </CardContent>
+                    </Card>
+                </div>
         </main>
     )
 }

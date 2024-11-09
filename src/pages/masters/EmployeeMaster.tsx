@@ -55,6 +55,7 @@ const tblcolumns = [
     { key: "targetamt", label: "Target Amount" },
     { key: "active", label: "Active" },
     { key: "stractive", label: "Status" },
+    { key: "salary",label:"Salary"}
 ];
   
 const tblHiddenColumns = ["active"];

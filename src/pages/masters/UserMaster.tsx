@@ -52,7 +52,7 @@ const tblcolumns = [
   { key: "roleid",label: "User Level Doc No"}
 ];
 
-const tblHiddenColumns = ["userleveldocno"];
+const tblHiddenColumns = ["roleid"];
 
 
 
