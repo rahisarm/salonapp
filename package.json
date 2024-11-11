@@ -1,5 +1,6 @@
 {
   "name": "salonapp",
+  "homepage": "http://localhost:8080/salonapp",
   "private": true,
   "version": "0.0.0",
   "type": "module",

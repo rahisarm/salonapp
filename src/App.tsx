@@ -10,7 +10,7 @@ import { SettingsProvider } from './contexts/SettingsContext'
 function App() {
   return (
     <ThemeProvider>
-      <Router>
+      <Router basename='salonapp'>
         <SettingsProvider>
           <ConfirmProvider>
             <Toaster></Toaster>
