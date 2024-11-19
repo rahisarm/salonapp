@@ -18,6 +18,15 @@ import { HandCoinsIcon, UserPlus, UsersRound, Wallet } from "lucide-react";
 import { useEffect, useState } from "react";
 import { DateRange } from "react-day-picker";
 
+interface dailybalProps{
+    docno:number;
+    openingbalance:number;
+    dailyinvoice:number;
+    dailyexpense:number;
+    dailybalance:number;
+    closingbalance:number;
+}
+
 interface PayrollProps{
     empdocno:number;
     empname:string;
@@ -46,6 +55,7 @@ export function BIReport(){
     const [isSubmitting,setIsSubmitting]=useState<boolean>(false);
     const [dailyCounterDate,setDailyCounterDate]=useState<Date | undefined>(new Date);
     const [payrolldate,setPayrolldate]=useState<Date | undefined>(new Date);
+    const [dailybaldate,setDailybaldate]=useState<Date | undefined>(new Date);
     const [totalInvoice, setTotalInvoice] = useState<number>(0);  // Revenue
     const [totalExpense, setTotalExpense] = useState<number>(0);  // Expense
     const [newCustomers, setNewCustomers] = useState<number>(0);  // New Customers
@@ -53,6 +63,7 @@ export function BIReport(){
     const [multiChartData,setMultiChartData]=useState<Array<{ [key: string]: number | string }>>([]);
     const [pieChartData,setPieChartData]=useState<PieChartData[]>([]);
     const [payrollData,setPayrollData]=useState<PayrollProps[]>([]);
+    const [dailybalData,setDailybalData]=useState<dailybalProps[]>([]);
     const [pieChartConfig,setPieChartConfig]=useState<PieChartConfig>({});
     const globalsettings=useSettings();
     const [dateRangeNames,setDateRangeNames]=useState({
@@ -185,6 +196,19 @@ export function BIReport(){
         });
     }
 
+    function getDailyBalData(){
+        const data={dailybaldate:dailybaldate};
+        sendAPIRequest(data,"A","/dashboard/DailyBalance","Daily Balance").then((response)=>{
+            if(response.data){
+                setDailybalData(response.data.dailybalList);
+            }
+        }).catch((error)=>{
+            console.error(error);
+        }).finally(()=>{
+            
+        });
+    }
+
     useEffect(()=>{
         if(selectedDateRange){
             const fromMonth = new Intl.DateTimeFormat('en-IN', { month: 'short' }).format(selectedDateRange.from);
@@ -211,6 +235,12 @@ export function BIReport(){
             getPayrollData();
         }
     },[payrolldate]);
+
+    useEffect(()=>{
+        if(dailybaldate){
+            getDailyBalData();
+        }
+    },[dailybaldate]);
 
     
     
@@ -278,7 +308,7 @@ export function BIReport(){
                 <div className="col-span-2 md:col-span-1 lg:col-span-1">
                     <CustomPieChart data={pieChartData} chartconfig={pieChartConfig} description="Expense" totalLabel="Expense" title={"Expenses from "+dateRangeNames.from+" to "+dateRangeNames.to}></CustomPieChart></div>
                 </div>
-                <div className="col-span-2 md:col-span-1 lg:col-span-1">
+                <div className="md:col-span-1 lg:col-span-1">
                     <Card>
                         <CardHeader className="pb-2">
                             <div className="flex align-middle justify-between">
@@ -303,6 +333,40 @@ export function BIReport(){
                                             <TableCell>{globalsettings.formatAmount(row.workbonus+"")}</TableCell>
                                             <TableCell>{globalsettings.formatAmount(row.nightbonus+"")}</TableCell>
                                             <TableCell>{globalsettings.formatAmount(row.totalsalary+"")}</TableCell>
+                                        </TableRow>
+                                    ))}
+                                    
+                                </TableBody>
+                            </Table>
+                        </CardContent>
+                    </Card>
+                </div>
+
+                <div className="col md:col-span-1 lg:col-span-1">
+                    <Card>
+                        <CardHeader className="pb-2">
+                            <div className="flex align-middle justify-between">
+                                <p>Daily Balance</p>
+                                <div className="max[200-px]"><DatePicker value={dailybaldate} onChange={setDailybaldate}></DatePicker></div>
+                            </div> 
+                        </CardHeader>
+                        <CardContent>
+                            <Table className="rounded">
+                                <TableHeader>
+                                    <TableHead>Opening Balance</TableHead>
+                                    <TableHead>Daily Invoice</TableHead>
+                                    <TableHead>Daily Expense</TableHead>
+                                    <TableHead>Balance</TableHead>
+                                    <TableHead>Closing Balance</TableHead>
+                                </TableHeader>
+                                <TableBody className="border-t-2">
+                                    {dailybalData.map((row)=>(
+                                        <TableRow key={row.docno}>
+                                            <TableCell>{globalsettings.formatAmount(row.openingbalance+"")}</TableCell>
+                                            <TableCell>{globalsettings.formatAmount(row.dailyinvoice+"")}</TableCell>
+                                            <TableCell>{globalsettings.formatAmount(row.dailyexpense+"")}</TableCell>
+                                            <TableCell>{globalsettings.formatAmount(row.dailybalance+"")}</TableCell>
+                                            <TableCell>{globalsettings.formatAmount(row.closingbalance+"")}</TableCell>
                                         </TableRow>
                                     ))}
                                     
