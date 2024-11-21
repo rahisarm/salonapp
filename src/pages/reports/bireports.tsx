@@ -308,73 +308,81 @@ export function BIReport(){
                 <div className="col-span-2 md:col-span-1 lg:col-span-1">
                     <CustomPieChart data={pieChartData} chartconfig={pieChartConfig} description="Expense" totalLabel="Expense" title={"Expenses from "+dateRangeNames.from+" to "+dateRangeNames.to}></CustomPieChart></div>
                 </div>
-                <div className="md:col-span-1 lg:col-span-1">
-                    <Card>
-                        <CardHeader className="pb-2">
-                            <div className="flex align-middle justify-between">
-                                <p>Salary Processing</p>
-                                <div className="max[200-px]"><DatePicker value={payrolldate} onChange={setPayrolldate}></DatePicker></div>
-                            </div> 
-                        </CardHeader>
-                        <CardContent>
-                            <Table className="rounded">
-                                <TableHeader>
-                                    <TableHead>Employee</TableHead>
-                                    <TableHead>Base Salary</TableHead>
-                                    <TableHead>Extra Bonus</TableHead>
-                                    <TableHead>Night Bonus</TableHead>
-                                    <TableHead>Total</TableHead>
-                                </TableHeader>
-                                <TableBody className="border-t-2">
-                                    {payrollData.map((row)=>(
-                                        <TableRow key={row.empdocno}>
-                                            <TableCell>{row.empname}</TableCell>
-                                            <TableCell>{globalsettings.formatAmount(row.salary+"")}</TableCell>
-                                            <TableCell>{globalsettings.formatAmount(row.workbonus+"")}</TableCell>
-                                            <TableCell>{globalsettings.formatAmount(row.nightbonus+"")}</TableCell>
-                                            <TableCell>{globalsettings.formatAmount(row.totalsalary+"")}</TableCell>
-                                        </TableRow>
-                                    ))}
-                                    
-                                </TableBody>
-                            </Table>
-                        </CardContent>
-                    </Card>
+                <div className="grid grid-rows-1 gap-4 sm:grid-cols-1 md:grid-cols-1 lg:grid-cols-2">
+                    <div>
+                        <Card>
+                            <CardHeader className="pb-2">
+                                <div className="flex align-middle justify-between">
+                                    <p>Salary Processing</p>
+                                    <div className="max[200-px]"><DatePicker value={payrolldate} onChange={setPayrolldate}></DatePicker></div>
+                                </div> 
+                            </CardHeader>
+                            <CardContent>
+                                <Table className="rounded">
+                                    <TableHeader>
+                                        <TableHead>Employee</TableHead>
+                                        <TableHead>Base Salary</TableHead>
+                                        <TableHead>Extra Bonus</TableHead>
+                                        <TableHead>Night Bonus</TableHead>
+                                        <TableHead>Total</TableHead>
+                                    </TableHeader>
+                                    <TableBody className="border-t-2">
+                                        {payrollData.map((row)=>(
+                                            <TableRow key={row.empdocno}>
+                                                <TableCell>{row.empname}</TableCell>
+                                                <TableCell>{globalsettings.formatAmount(row.salary+"")}</TableCell>
+                                                <TableCell>{globalsettings.formatAmount(row.workbonus+"")}</TableCell>
+                                                <TableCell>{globalsettings.formatAmount(row.nightbonus+"")}</TableCell>
+                                                <TableCell>{globalsettings.formatAmount(row.totalsalary+"")}</TableCell>
+                                            </TableRow>
+                                        ))}
+                                        
+                                    </TableBody>
+                                </Table>
+                            </CardContent>
+                        </Card>
+                    </div>
+                    <div>
+                        <Card>
+                            <CardHeader className="pb-2">
+                                <div className="flex align-middle justify-between">
+                                    <p>Daily Balance</p>
+                                    <div className="max[200-px]"><DatePicker value={dailybaldate} onChange={setDailybaldate}></DatePicker></div>
+                                </div> 
+                            </CardHeader>
+                            <CardContent>
+                                <Table className="rounded">
+                                    <TableHeader>
+                                        <TableHead>Opening Balance</TableHead>
+                                        <TableHead>Daily Invoice</TableHead>
+                                        <TableHead>Daily Expense</TableHead>
+                                        <TableHead>Balance</TableHead>
+                                        <TableHead>Closing Balance</TableHead>
+                                    </TableHeader>
+                                    <TableBody className="border-t-2">
+                                        {dailybalData.map((row)=>(
+                                            <TableRow key={row.docno}>
+                                                <TableCell>{globalsettings.formatAmount(row.openingbalance+"")}</TableCell>
+                                                <TableCell>{globalsettings.formatAmount(row.dailyinvoice+"")}</TableCell>
+                                                <TableCell>{globalsettings.formatAmount(row.dailyexpense+"")}</TableCell>
+                                                <TableCell>{globalsettings.formatAmount(row.dailybalance+"")}</TableCell>
+                                                <TableCell>{globalsettings.formatAmount(row.closingbalance+"")}</TableCell>
+                                            </TableRow>
+                                        ))}
+                                        
+                                    </TableBody>
+                                </Table>
+                            </CardContent>
+                        </Card>
+                    </div>
+                </div>
+                {/* <div className="md:col-span-1 lg:col-span-1">
+                    
                 </div>
 
                 <div className="col md:col-span-1 lg:col-span-1">
-                    <Card>
-                        <CardHeader className="pb-2">
-                            <div className="flex align-middle justify-between">
-                                <p>Daily Balance</p>
-                                <div className="max[200-px]"><DatePicker value={dailybaldate} onChange={setDailybaldate}></DatePicker></div>
-                            </div> 
-                        </CardHeader>
-                        <CardContent>
-                            <Table className="rounded">
-                                <TableHeader>
-                                    <TableHead>Opening Balance</TableHead>
-                                    <TableHead>Daily Invoice</TableHead>
-                                    <TableHead>Daily Expense</TableHead>
-                                    <TableHead>Balance</TableHead>
-                                    <TableHead>Closing Balance</TableHead>
-                                </TableHeader>
-                                <TableBody className="border-t-2">
-                                    {dailybalData.map((row)=>(
-                                        <TableRow key={row.docno}>
-                                            <TableCell>{globalsettings.formatAmount(row.openingbalance+"")}</TableCell>
-                                            <TableCell>{globalsettings.formatAmount(row.dailyinvoice+"")}</TableCell>
-                                            <TableCell>{globalsettings.formatAmount(row.dailyexpense+"")}</TableCell>
-                                            <TableCell>{globalsettings.formatAmount(row.dailybalance+"")}</TableCell>
-                                            <TableCell>{globalsettings.formatAmount(row.closingbalance+"")}</TableCell>
-                                        </TableRow>
-                                    ))}
-                                    
-                                </TableBody>
-                            </Table>
-                        </CardContent>
-                    </Card>
-                </div>
+                    
+                </div> */}
         </main>
     )
 }

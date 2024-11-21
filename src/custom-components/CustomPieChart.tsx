@@ -37,7 +37,8 @@ interface CustomPieChartProps{
 ]*/
 
 export function CustomPieChart({title,description,data,totalLabel,chartconfig}:CustomPieChartProps) {
-  
+  console.log('inside pie');
+  console.log(data);
   const totalValue = React.useMemo(() => {
     return data.reduce((acc, curr) => acc + curr.chartvalue, 0)
   }, [data]);

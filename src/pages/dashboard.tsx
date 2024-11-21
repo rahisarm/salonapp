@@ -3,7 +3,10 @@ import { CustMenuBar } from "@/custom-components/menu-bar";
 import { ModeToggle } from "@/custom-components/mode-toggle";
 import { NormalDropdown } from "@/custom-components/NormalDropdown";
 import { UserNav } from "@/custom-components/usernav";
-import { Outlet } from "react-router-dom";
+import { Link, Outlet } from "react-router-dom";
+import { EmployeeInvoice } from "./transactions/EmployeeInvoice";
+import { useEffect, useState } from "react";
+import { sendAPIRequest } from "@/services/common";
 
 const handleValueChange=function(dataType:string,selectedValue:string){
   if(dataType=="brhid"){
@@ -12,6 +15,26 @@ const handleValueChange=function(dataType:string,selectedValue:string){
 };
 
 export function Dashboard(){
+    const [userRole,setUserRole]=useState<string | null>(null);
+
+    useEffect(() => {
+      const cachedRole = localStorage.getItem("userrole");
+      if (cachedRole) {
+        setUserRole(cachedRole);
+      } else {
+        sendAPIRequest(null, "G", "/user/" + localStorage.getItem("userdocno"), "User Details")
+          .then((response: any) => {
+            if (response?.data) {
+              const role = response.data.roleid;
+              localStorage.setItem("userrole", role);
+              setUserRole(role);
+            }
+          })
+          .catch((error) => {
+            console.error(error);
+          });
+      }
+    }, []);
     return (
       <>
         {/* <nav className="bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700 fixed top-0 left-0 right-0 z-50">
@@ -25,7 +48,7 @@ export function Dashboard(){
             <div className="flex h-16 items-center px-4">
               <div className="flex items-center justify-between">
               <NormalDropdown dataLabel="Branch" dataType="brhid" onValueChange={handleValueChange}></NormalDropdown>
-              <CustMenuBar className="mx-6"></CustMenuBar>
+              {userRole!="5" && <CustMenuBar className="mx-6"></CustMenuBar>}
               </div>
               
               <div className="ml-auto flex items-center space-x-4">

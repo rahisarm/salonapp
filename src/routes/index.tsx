@@ -14,12 +14,15 @@ import { VendorMaster } from "@/pages/masters/VendorMaster";
 import { Invoice } from "@/pages/transactions/Invoice";
 import { BIReport } from "@/pages/reports/bireports";
 import { Settings } from "@/pages/masters/Settings";
+import { EmployeeInvoice } from "@/pages/transactions/EmployeeInvoice";
 
 const AppRoutes: React.FC=()=>{
     return (
         <Routes>
             <Route path='/login' element={<Login></Login>}></Route>
             <Route path='/dashboard' element={<ProtectedRoute element={<Dashboard></Dashboard>}></ProtectedRoute>}>
+                <Route index element={<ProtectedRoute element={<EmployeeInvoice></EmployeeInvoice>}></ProtectedRoute>} />
+                <Route path="empinvoice" element={<ProtectedRoute element={<EmployeeInvoice></EmployeeInvoice>}></ProtectedRoute>}></Route>
                 <Route path="usermaster" element={<ProtectedRoute element={<UserMaster></UserMaster>}></ProtectedRoute>}></Route>
                 <Route path="clientmaster" element={<ProtectedRoute element={<ClientMaster></ClientMaster>}></ProtectedRoute>}></Route>
                 <Route path="employeemaster" element={<ProtectedRoute element={<EmployeeMaster></EmployeeMaster>}></ProtectedRoute>}></Route>

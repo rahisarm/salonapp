@@ -12,16 +12,16 @@ export function UserNav(){
     const handleLogout=()=>{
         localStorage.removeItem('token');
         localStorage.removeItem('userdocno');
+        localStorage.removeItem('userrole');
+        
         navigate('/');
     }
 
     const getInitials = (name: string) => {
         if(name.trim().includes(" ")){
-
             const nameParts = name.trim().split(" ");
             const firstInitial = nameParts[0].charAt(0);
             const lastInitial = nameParts[nameParts.length - 1].charAt(0);
-        
             return `${firstInitial}${lastInitial}`.toUpperCase();
         }
         else{
@@ -68,14 +68,17 @@ export function UserNav(){
                 </div>
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
-                <DropdownMenuGroup>
-                <DropdownMenuItem>
-                    <Link to="/dashboard/settings">Settings</Link>
-                    <DropdownMenuShortcut>⌘S</DropdownMenuShortcut>
-                </DropdownMenuItem>
+                {localStorage.getItem("userrole")!="5" &&
+                    <>
+                        <DropdownMenuGroup>
+                            <DropdownMenuItem>
+                                <Link to="/dashboard/settings">Settings</Link>
+                            </DropdownMenuItem>
+                        </DropdownMenuGroup>
+                        <DropdownMenuSeparator />
+                    </>
+                }
                 
-                </DropdownMenuGroup>
-                <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={handleLogout}>
                 Log out
                 <DropdownMenuShortcut>⇧⌘Q</DropdownMenuShortcut>

@@ -34,6 +34,7 @@ export function Login({ className, ...props }: LoginProps) {
     axiosInstance
       .post("/auth/login", { username: data.username, password: data.password })
       .then((response) => {
+        
         localStorage.setItem('token', response.data.accessToken);
         localStorage.setItem('userdocno', response.data.userdocno);
         if (response.data.accessToken) {

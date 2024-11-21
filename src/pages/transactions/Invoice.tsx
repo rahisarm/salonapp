@@ -495,7 +495,7 @@ function changeDropdownData(field:any,value:string){
                                             <FormItem>
                                                 <FormLabel>Total</FormLabel>
                                                 <FormControl>
-                                                    <Input placeholder="Total" {...field} type="text" inputMode="decimal" readOnly/>
+                                                    <Input placeholder="Total" {...field} type="text" inputMode="decimal" />
                                                 </FormControl>
                                                 <FormDescription>This is the total invoice amount.</FormDescription>
                                                 <FormMessage />
@@ -512,7 +512,7 @@ function changeDropdownData(field:any,value:string){
                                             </FormItem>
                                         )} />
                                         <FormField control={form.control} name="tax" render={({ field }) => (
-                                            <FormItem>
+                                            <FormItem style={{"visibility":globalsettings.settings.tax.method=="1"?"visible":"hidden"}}>
                                                 <FormLabel>Tax</FormLabel>
                                                 <FormControl>
                                                     <Input placeholder="Tax" {...field} type="text" inputMode="decimal" readOnly/>
